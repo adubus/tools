@@ -1,0 +1,72 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#4CAF50" />
+  <link rel="manifest" href="manifest.json">
+  <title>GPS Ville</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 2em; }
+    input { padding: 0.5em; width: 80%; max-width: 400px; font-size: 1.2em; }
+    button { margin-top: 1em; padding: 0.6em 1.2em; font-size: 1em; }
+    #result { margin-top: 1em; font-weight: bold; }
+    #actions { margin-top: 1em; }
+  </style>
+</head>
+<body>
+  <h2>Coordonnées GPS par ville</h2>
+  <input type="text" id="city" placeholder="Entrez une ville">
+  <br>
+  <button onclick="getCoordinates()">Obtenir les coordonnées</button>
+  <p id="result"></p>
+  <div id="actions" style="display: none;">
+    <button onclick="copyToClipboard()">Copier</button>
+    <button onclick="openGeovelo()">Ouvrir dans Geovelo</button>
+  </div>
+
+  <script>
+    let lastLon = null;
+    let lastLat = null;
+
+    async function getCoordinates() {
+      const city = document.getElementById("city").value;
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city)}`;
+
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.length > 0) {
+          const lat = data[0].lat;
+          const lon = data[0].lon;
+          lastLat = lat;
+          lastLon = lon;
+          document.getElementById("result").innerText = `Longitude,Latitude : ${lon},${lat}`;
+          document.getElementById("actions").style.display = 'block';
+        } else {
+          document.getElementById("result").innerText = "Ville non trouvée.";
+          document.getElementById("actions").style.display = 'none';
+        }
+      } catch (error) {
+        document.getElementById("result").innerText = "Erreur de réseau.";
+        document.getElementById("actions").style.display = 'none';
+      }
+    }
+
+    function copyToClipboard() {
+      if (lastLon && lastLat) {
+        navigator.clipboard.writeText(`${lastLon},${lastLat}`);
+        alert("Coordonnées copiées dans le presse-papiers !");
+      }
+    }
+
+    function openGeovelo() {
+      if (lastLon && lastLat) {
+        const url = `https://geovelo.app/fr/route/?from=${lastLon},${lastLat}`;
+        window.open(url, '_blank');
+      }
+    }
+  </script>
+</body>
+</html>
