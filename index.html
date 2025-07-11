@@ -31,7 +31,8 @@
 
     async function getCoordinates() {
       const city = document.getElementById("city").value;
-      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city)}`;
+      const baseUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city)}`;
+      const url = `https://corsproxy.io/?${encodeURIComponent(baseUrl)}`;
 
       try {
         const response = await fetch(url);
@@ -49,7 +50,7 @@
           document.getElementById("actions").style.display = 'none';
         }
       } catch (error) {
-        document.getElementById("result").innerText = "Erreur de réseau.";
+        document.getElementById("result").innerText = "Erreur réseau ou API bloquée.";
         document.getElementById("actions").style.display = 'none';
       }
     }
