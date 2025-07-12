@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>GPS - Ville à Ville</title>
+  <title>GPS Ville à Ville</title>
   <style>
     body { font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; }
     input, button { padding: 10px; margin: 5px 0; width: 100%; font-size: 1em; }
-    #actions { display: none; margin-top: 10px; }
-    #actions button { width: 48%; }
+    #actions { display: none; margin-top: 10px; gap: 5px; flex-wrap: wrap; }
+    #actions button { width: 100%; }
     .inline-buttons { display: flex; justify-content: space-between; gap: 4%; }
+    .link { font-size: 0.9em; color: #555; word-wrap: break-word; }
   </style>
 </head>
 <body>
@@ -32,8 +33,10 @@
   <p id="endResult">–</p>
 
   <div id="actions">
-    <button onclick="copyGeovelo()">📎 Copier lien</button>
-    <button onclick="openGeovelo()">🚲 Ouvrir Geovelo</button>
+    <button onclick="copyGeovelo()">📎 Copier le lien Geovelo</button>
+    <button onclick="openGeovelo()">🌍 Ouvrir dans Geovelo (Safari)</button>
+    <button onclick="openGoogleMaps()">🚲 Ouvrir dans Google Maps (vélo)</button>
+    <p class="link" id="linkDisplay"></p>
   </div>
 
   <script>
@@ -77,8 +80,18 @@
 
     function checkBothCities() {
       if (coords.start.lat && coords.end.lat) {
+        const geoveloLink = generateGeoveloUrl();
+        document.getElementById("linkDisplay").innerText = geoveloLink;
         document.getElementById("actions").style.display = 'flex';
       }
+    }
+
+    function generateGeoveloUrl() {
+      return `https://geovelo.app/fr/route/?from=${coords.start.lon},${coords.start.lat}&to=${coords.end.lon},${coords.end.lat}`;
+    }
+
+    function generateGoogleMapsUrl() {
+      return `https://www.google.com/maps/dir/?api=1&origin=${coords.start.lat},${coords.start.lon}&destination=${coords.end.lat},${coords.end.lon}&travelmode=bicycling`;
     }
 
     function copyGeovelo() {
@@ -89,11 +102,12 @@
 
     function openGeovelo() {
       const url = generateGeoveloUrl();
-      window.open(url, "_blank");
+      window.open(url, "_blank"); // Forcera Safari à rester dans le navigateur
     }
 
-    function generateGeoveloUrl() {
-      return `https://geovelo.app/fr/route/?from=${coords.start.lon},${coords.start.lat}&to=${coords.end.lon},${coords.end.lat}`;
+    function openGoogleMaps() {
+      const url = generateGoogleMapsUrl();
+      window.open(url, "_blank");
     }
   </script>
 </body>
