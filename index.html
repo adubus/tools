@@ -26,8 +26,19 @@
   </div>
 
   <script>
-    let lastLon = null;
-    let lastLat = null;
+  let lastLon = null;
+  let lastLat = null;
+
+  async function preloadClipboard() {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text.length > 0) {
+        document.getElementById("city").value = text;
+      }
+    } catch (err) {
+      console.log("⛔ Impossible de lire le presse-papiers : ", err);
+    }
+  }
 
     async function getCoordinates() {
       const city = document.getElementById("city").value;
