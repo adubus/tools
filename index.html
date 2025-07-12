@@ -1,58 +1,82 @@
-<script>
-  let lastLon = null;
-  let lastLat = null;
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Coordonnées GPS d'une ville</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    body { font-family: sans-serif; padding: 20px; max-width: 500px; margin: auto; }
+    input, button { padding: 10px; font-size: 1em; margin: 5px 0; width: 100%; }
+    #actions button { width: 49%; }
+  </style>
+</head>
+<body>
+  <h2>📍 Coordonnées GPS</h2>
 
-  async function preloadClipboard() {
-    try {
-      const text = await navigator.clipboard.readText();
-      if (text.length > 0) {
+  <input id="city" type="text" placeholder="Entrez une ville">
+  <button onclick="pasteCity()">📋 Coller la ville</button>
+  <button onclick="getCoordinates()">🔍 Obtenir les coordonnées</button>
+
+  <p id="result">–</p>
+
+  <div id="actions" style="display:none;">
+    <button onclick="copyToClipboard()">📎 Copier</button>
+    <button onclick="openGeovelo()">🚲 Geovelo</button>
+  </div>
+
+  <script>
+    let lastLon = null;
+    let lastLat = null;
+
+    async function pasteCity() {
+      try {
+        const text = await navigator.clipboard.readText();
         document.getElementById("city").value = text;
+      } catch (err) {
+        alert("⛔ Impossible de lire le presse-papiers. Autorisez l'accès dans votre navigateur.");
       }
-    } catch (err) {
-      console.log("⛔ Impossible de lire le presse-papiers : ", err);
     }
-  }
 
-  async function getCoordinates() {
-    const city = document.getElementById("city").value;
-    const baseUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city)}`;
-    const url = `https://corsproxy.io/?${encodeURIComponent(baseUrl)}`;
+    async function getCoordinates() {
+      const city = document.getElementById("city").value;
+      const baseUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city)}`;
+      const url = `https://corsproxy.io/?${encodeURIComponent(baseUrl)}`;
 
-    try {
-      const response = await fetch(url);
-      const data = await response.json();
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
 
-      if (data.length > 0) {
-        const lat = data[0].lat;
-        const lon = data[0].lon;
-        lastLat = lat;
-        lastLon = lon;
-        document.getElementById("result").innerText = `Longitude,Latitude : ${lon},${lat}`;
-        document.getElementById("actions").style.display = 'block';
-      } else {
-        document.getElementById("result").innerText = "Ville non trouvée.";
+        if (data.length > 0) {
+          const lat = data[0].lat;
+          const lon = data[0].lon;
+          lastLat = lat;
+          lastLon = lon;
+          document.getElementById("result").innerText = `Longitude,Latitude : ${lon},${lat}`;
+          document.getElementById("actions").style.display = 'block';
+        } else {
+          document.getElementById("result").innerText = "Ville non trouvée.";
+          document.getElementById("actions").style.display = 'none';
+        }
+      } catch (error) {
+        document.getElementById("result").innerText = "Erreur lors de la récupération des données.";
         document.getElementById("actions").style.display = 'none';
       }
-    } catch (error) {
-      document.getElementById("result").innerText = "Erreur réseau ou API bloquée.";
-      document.getElementById("actions").style.display = 'none';
     }
-  }
 
-  function copyToClipboard() {
-    if (lastLon && lastLat) {
-      navigator.clipboard.writeText(`${lastLon},${lastLat}`);
-      alert("Coordonnées copiées dans le presse-papiers !");
+    function copyToClipboard() {
+      if (lastLon && lastLat) {
+        navigator.clipboard.writeText(`${lastLon},${lastLat}`);
+        alert("Coordonnées copiées !");
+      }
     }
-  }
 
-  function openGeovelo() {
-    if (lastLon && lastLat) {
-      const url = `https://geovelo.app/fr/route/?from=${lastLon},${lastLat}`;
-      window.open(url, '_blank');
+    function openGeovelo() {
+      if (lastLon && lastLat) {
+        const url = `https://geovelo.app/fr/route/?from=${lastLon},${lastLat}`;
+        window.open(url, '_blank');
+      }
     }
-  }
-
-  // ⏳ Démarre dès le chargement de la page
-  window.addEventListener('load', preloadClipboard);
-</script>
+  </script>
+</body>
+</html>
