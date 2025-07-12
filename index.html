@@ -14,7 +14,7 @@
   </style>
 </head>
 <body>
-  <h2>🚲 Itinéraire Geovelo</h2>
+  <h2>🚲 Itinéraire vélo</h2>
 
   <label>Ville de départ :</label>
   <input id="startCity" placeholder="Ex: Lille" />
@@ -34,8 +34,9 @@
 
   <div id="actions">
     <button onclick="copyGeovelo()">📎 Copier le lien Geovelo</button>
-    <button onclick="openGeovelo()">🌍 Ouvrir dans Geovelo (Safari)</button>
-    <button onclick="openGoogleMaps()">🚲 Ouvrir dans Google Maps (vélo)</button>
+    <button onclick="openGeovelo()">🌍 Ouvrir dans Geovelo (⚠️ iOS ne charge pas l’itinéraire)</button>
+    <button onclick="openGoogleMaps()">🚲 Ouvrir dans Google Maps (recommandé)</button>
+    <button onclick="openAppleMaps()">🍏 Ouvrir dans Apple Plans</button>
     <p class="link" id="linkDisplay"></p>
   </div>
 
@@ -94,23 +95,29 @@
       return `https://www.google.com/maps/dir/?api=1&origin=${coords.start.lat},${coords.start.lon}&destination=${coords.end.lat},${coords.end.lon}&travelmode=bicycling`;
     }
 
+    function generateAppleMapsUrl() {
+      return `maps://?saddr=${coords.start.lat},${coords.start.lon}&daddr=${coords.end.lat},${coords.end.lon}&dirflg=b`;
+    }
+
     function copyGeovelo() {
       const url = generateGeoveloUrl();
       navigator.clipboard.writeText(url);
       alert("✅ Lien Geovelo copié !");
     }
 
-  function openGeovelo() {
-    const from = `${coords.start.lon},${coords.start.lat}`;
-    const to = `${coords.end.lon},${coords.end.lat}`;
-    const proxyUrl = `https://adubus.github.io/gps-ville/redir.html?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
-    window.open(proxyUrl, "_blank");
-  }
-
+    function openGeovelo() {
+      const url = generateGeoveloUrl();
+      window.open(url, "_blank");
+    }
 
     function openGoogleMaps() {
       const url = generateGoogleMapsUrl();
       window.open(url, "_blank");
+    }
+
+    function openAppleMaps() {
+      const url = generateAppleMapsUrl();
+      window.location.href = url; // Apple Maps s’ouvre en local
     }
   </script>
 </body>
