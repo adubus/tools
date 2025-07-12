@@ -1,45 +1,60 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Coordonnées GPS d'une ville</title>
-  <link rel="manifest" href="manifest.json">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GPS - Ville à Ville</title>
   <style>
-    body { font-family: sans-serif; padding: 20px; max-width: 500px; margin: auto; }
-    input, button { padding: 10px; font-size: 1em; margin: 5px 0; width: 100%; }
-    #actions button { width: 49%; }
+    body { font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; }
+    input, button { padding: 10px; margin: 5px 0; width: 100%; font-size: 1em; }
+    #actions { display: none; margin-top: 10px; }
+    #actions button { width: 48%; }
+    .inline-buttons { display: flex; justify-content: space-between; gap: 4%; }
   </style>
 </head>
 <body>
-  <h2>📍 Coordonnées GPS</h2>
+  <h2>🚲 Itinéraire Geovelo</h2>
 
-  <input id="city" type="text" placeholder="Entrez une ville">
-  <button onclick="pasteCity()">📋 Coller la ville</button>
-  <button onclick="getCoordinates()">🔍 Obtenir les coordonnées</button>
+  <label>Ville de départ :</label>
+  <input id="startCity" placeholder="Ex: Lille" />
+  <div class="inline-buttons">
+    <button onclick="pasteClipboard('startCity')">📋 Coller</button>
+    <button onclick="getCoordinates('start')">🔍 Coordonnées</button>
+  </div>
+  <p id="startResult">–</p>
 
-  <p id="result">–</p>
+  <label>Ville d’arrivée :</label>
+  <input id="endCity" placeholder="Ex: Tournai" />
+  <div class="inline-buttons">
+    <button onclick="pasteClipboard('endCity')">📋 Coller</button>
+    <button onclick="getCoordinates('end')">🔍 Coordonnées</button>
+  </div>
+  <p id="endResult">–</p>
 
-  <div id="actions" style="display:none;">
-    <button onclick="copyToClipboard()">📎 Copier</button>
-    <button onclick="openGeovelo()">🚲 Geovelo</button>
+  <div id="actions">
+    <button onclick="copyGeovelo()">📎 Copier lien</button>
+    <button onclick="openGeovelo()">🚲 Ouvrir Geovelo</button>
   </div>
 
   <script>
-    let lastLon = null;
-    let lastLat = null;
+    let coords = {
+      start: { lat: null, lon: null },
+      end: { lat: null, lon: null }
+    };
 
-    async function pasteCity() {
+    async function pasteClipboard(fieldId) {
       try {
         const text = await navigator.clipboard.readText();
-        document.getElementById("city").value = text;
-      } catch (err) {
-        alert("⛔ Impossible de lire le presse-papiers. Autorisez l'accès dans votre navigateur.");
+        document.getElementById(fieldId).value = text;
+      } catch (e) {
+        alert("❌ Autorisation presse-papiers refusée.");
       }
     }
 
-    async function getCoordinates() {
-      const city = document.getElementById("city").value;
+    async function getCoordinates(type) {
+      const city = document.getElementById(type + "City").value;
+      if (!city) return;
+
       const baseUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city)}`;
       const url = `https://corsproxy.io/?${encodeURIComponent(baseUrl)}`;
 
@@ -48,34 +63,37 @@
         const data = await response.json();
 
         if (data.length > 0) {
-          const lat = data[0].lat;
-          const lon = data[0].lon;
-          lastLat = lat;
-          lastLon = lon;
-          document.getElementById("result").innerText = `Longitude,Latitude : ${lon},${lat}`;
-          document.getElementById("actions").style.display = 'block';
+          coords[type].lat = data[0].lat;
+          coords[type].lon = data[0].lon;
+          document.getElementById(type + "Result").innerText = `Coordonnées : ${coords[type].lon},${coords[type].lat}`;
+          checkBothCities();
         } else {
-          document.getElementById("result").innerText = "Ville non trouvée.";
-          document.getElementById("actions").style.display = 'none';
+          document.getElementById(type + "Result").innerText = "Ville non trouvée.";
         }
-      } catch (error) {
-        document.getElementById("result").innerText = "Erreur lors de la récupération des données.";
-        document.getElementById("actions").style.display = 'none';
+      } catch (err) {
+        document.getElementById(type + "Result").innerText = "Erreur de récupération.";
       }
     }
 
-    function copyToClipboard() {
-      if (lastLon && lastLat) {
-        navigator.clipboard.writeText(`${lastLon},${lastLat}`);
-        alert("Coordonnées copiées !");
+    function checkBothCities() {
+      if (coords.start.lat && coords.end.lat) {
+        document.getElementById("actions").style.display = 'flex';
       }
+    }
+
+    function copyGeovelo() {
+      const url = generateGeoveloUrl();
+      navigator.clipboard.writeText(url);
+      alert("✅ Lien Geovelo copié !");
     }
 
     function openGeovelo() {
-      if (lastLon && lastLat) {
-        const url = `https://geovelo.app/fr/route/?from=${lastLon},${lastLat}`;
-        window.open(url, '_blank');
-      }
+      const url = generateGeoveloUrl();
+      window.open(url, "_blank");
+    }
+
+    function generateGeoveloUrl() {
+      return `https://geovelo.app/fr/route/?from=${coords.start.lon},${coords.start.lat}&to=${coords.end.lon},${coords.end.lat}`;
     }
   </script>
 </body>
