@@ -34,9 +34,10 @@
 
   <div id="actions">
     <button onclick="copyGeovelo()">📎 Copier le lien Geovelo</button>
-    <button onclick="openGeovelo()">🌍 Ouvrir dans Geovelo (⚠️ iOS ne charge pas l’itinéraire)</button>
-    <button onclick="openGoogleMaps()">🚲 Ouvrir dans Google Maps (recommandé)</button>
+    <button id="geoveloButton" onclick="openGeovelo()">🌍 Ouvrir dans Geovelo (⚠️ iOS ne charge pas l’itinéraire)</button>
+    <button onclick="openGoogleMaps()">🚲 Ouvrir dans Google Maps</button>
     <button onclick="openAppleMaps()">🍏 Ouvrir dans Apple Plans</button>
+    <button onclick="openWaze()">🧭 Ouvrir dans Waze</button>
     <p class="link" id="linkDisplay"></p>
   </div>
 
@@ -99,6 +100,10 @@
       return `maps://?saddr=${coords.start.lat},${coords.start.lon}&daddr=${coords.end.lat},${coords.end.lon}&dirflg=b`;
     }
 
+    function generateWazeUrl() {
+      return `https://waze.com/ul?ll=${coords.end.lat},${coords.end.lon}&navigate=yes`;
+    }
+
     function copyGeovelo() {
       const url = generateGeoveloUrl();
       navigator.clipboard.writeText(url);
@@ -117,8 +122,22 @@
 
     function openAppleMaps() {
       const url = generateAppleMapsUrl();
-      window.location.href = url; // Apple Maps s’ouvre en local
+      window.location.href = url;
     }
+
+    function openWaze() {
+      const url = generateWazeUrl();
+      window.open(url, "_blank");
+    }
+
+    // ⛔ Masquer Geovelo sur iOS
+    document.addEventListener("DOMContentLoaded", () => {
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      if (isIOS) {
+        const geoBtn = document.getElementById("geoveloButton");
+        if (geoBtn) geoBtn.style.display = "none";
+      }
+    });
   </script>
 </body>
 </html>
