@@ -100,10 +100,13 @@
       alert("✅ Lien Geovelo copié !");
     }
 
-    function openGeovelo() {
-      const url = generateGeoveloUrl();
-      window.open(url, "_blank"); // Forcera Safari à rester dans le navigateur
-    }
+  function openGeovelo() {
+    const from = `${coords.start.lon},${coords.start.lat}`;
+    const to = `${coords.end.lon},${coords.end.lat}`;
+    const proxyUrl = `https://adubus.github.io/gps-ville/redir.html?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+    window.open(proxyUrl, "_blank");
+  }
+
 
     function openGoogleMaps() {
       const url = generateGoogleMapsUrl();
