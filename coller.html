@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Test presse-papiers</title>
+</head>
+<body>
+  <h1>Test presse-papiers</h1>
+  <input type="text" id="city" placeholder="Ville">
+  <br><br>
+  <button onclick="pasteCity()">?? Coller depuis le presse-papiers</button>
+
+  <script>
+    async function pasteCity() {
+      try {
+        const text = await navigator.clipboard.readText();
+        document.getElementById("city").value = text;
+        alert("Texte collé : " + text);
+      } catch (err) {
+        alert("Erreur : " + err);
+        console.error(err);
+      }
+    }
+  </script>
+</body>
+</html>
