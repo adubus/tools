@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Heures de Marée</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 2rem;
+    }
+    input, button {
+      padding: 0.5rem;
+      margin: 0.5rem;
+      font-size: 1rem;
+    }
+    #result {
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Horaires de Marée</h1>
+  <p>Entrez le nom d'une ville côtière :</p>
+  <input type="text" id="ville" placeholder="Ex: La Rochelle" />
+  <button onclick="obtenirMaree()">Obtenir les marées</button>
+
+  <div id="result"></div>
+
+  <script>
+    const API_KEY = "7499ed9f-fbe6-4297-9220-9fd879366b4a"; // ← Colle ta clé ici
+
+    async function obtenirMaree() {
+      const ville = document.getElementById("ville").value.trim();
+      const resultDiv = document.getElementById("result");
+      resultDiv.innerHTML = "Chargement...";
+
+      try {
+        // Étape 1 : Obtenir les coordonnées GPS de la ville
+        const geoResponse = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(ville)}`);
+        const geoData = await geoResponse.json();
+
+        if (!geoData || geoData.length === 0) {
+          resultDiv.innerHTML = "Ville non trouvée.";
+          return;
+        }
+
+        const lat = geoData[0].lat;
+        const lon = geoData[0].lon;
+
+        // Étape 2 : Appeler WorldTides.info
+        const tideResponse = await fetch(`https://www.worldtides.info/api/v3?heights&date=today&lat=${lat}&lon=${lon}&key=${API_KEY}`);
+        const tideData = await tideResponse.json();
+
+        if (!tideData.heights || tideData.heights.length === 0) {
+          resultDiv.innerHTML = "Aucune donnée de marée disponible.";
+          return;
+        }
+
+        const horaires = tideData.heights.map(h => {
+          const date = new Date(h.dt * 1000);
+          return `🕒 ${date.toLocaleTimeString()} - ${h.height.toFixed(2)} m`;
+        }).join("<br>");
+
+        resultDiv.innerHTML = `Coordonnées de ${ville} : ${lat}, ${lon}<br><br><strong>Heures de marée :</strong><br>${horaires}`;
+      } catch (error) {
+        console.error(error);
+        resultDiv.innerHTML = "Erreur lors de la récupération des données.";
+      }
+    }
+  </script>
+</body>
+</html>
