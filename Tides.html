@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Heures de Marée</title>
+  <title>Horaires des Marées</title>
   <style>
     body {
       font-family: sans-serif;
@@ -32,7 +32,7 @@
 
   <label for="ville">Ville côtière :</label>
   <input type="text" id="ville" placeholder="ex : Saint-Malo" />
-  <button onclick="obtenirMarees()">Obtenir les marées</button>
+  <button onclick="obtenirMarees()">Obtenir les marées...</button>
 
   <div id="result"></div>
 
@@ -51,30 +51,22 @@
         if (!geocode.length) throw new Error("Ville introuvable");
         const { lat, lon } = geocode[0];
 
-        // Étape 2 : date du jour à minuit
-        const today = new Date();
-        const dateStr = today.toISOString().split("T")[0];
-        const midnightTimestamp = Math.floor(new Date(dateStr + "T00:00:00Z").getTime() / 1000);
+        // Étape 2 : date locale du jour à minuit
+        const now = new Date();
+        const localMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const utcTimestamp = Math.floor(localMidnight.getTime() / 1000);
 
-        // Étape 3 : appel API marées
+        // Étape 3 : appel API WorldTides pour 24h
         const tide = await fetch(`https://corsproxy.io/?${encodeURIComponent(
-          `https://www.worldtides.info/api/v3?extremes&heights&lat=${lat}&lon=${lon}&start=${midnightTimestamp}&length=86400&key=${API_KEY}`
+          `https://www.worldtides.info/api/v3?extremes&lat=${lat}&lon=${lon}&start=${utcTimestamp}&length=86400&key=${API_KEY}`
         )}`).then(r => r.json());
 
-        // Étape 4 : filtrer les marées du jour
+        // Étape 4 : filtrer uniquement les marées du jour local
         const events = tide.extremes.filter(e => {
           const d = new Date(e.date);
-          return d.toLocaleDateString("fr-FR") === today.toLocaleDateString("fr-FR");
-        }).map(e => {
-          const d = new Date(e.date);
-          const h = d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-          return {
-            type: e.type,
-            time: h,
-            height: tide.heights.find(h2 =>
-              Math.abs(new Date(h2.dt * 1000).getTime() - d.getTime()) < 5 * 60 * 1000
-            )?.height || null
-          };
+          return d.getDate() === now.getDate() &&
+                 d.getMonth() === now.getMonth() &&
+                 d.getFullYear() === now.getFullYear();
         });
 
         if (!events.length) {
@@ -83,11 +75,12 @@
         }
 
         // Affichage
-        result.innerHTML = `<h2>Marées du ${today.toLocaleDateString("fr-FR")} à ${ville}</h2><ul>` +
-          events.map(e =>
-            `<li><strong>${e.type === "High" ? "Marée haute" : "Marée basse"}</strong> à ${e.time}` +
-            (e.height ? ` — ${e.height.toFixed(2)} m` : "") + `</li>`
-          ).join("") +
+        result.innerHTML = `<h2>Marées du ${now.toLocaleDateString("fr-FR")} à ${ville}</h2><ul>` +
+          events.map(e => {
+            const d = new Date(e.date);
+            const heure = d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+            return `<li><strong>${e.type === "High" ? "Marée haute" : "Marée basse"}</strong> à ${heure}</li>`;
+          }).join("") +
           `</ul>`;
       } catch (err) {
         console.error(err);
