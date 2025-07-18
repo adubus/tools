@@ -11,7 +11,9 @@
   </style>
 </head>
 <body>
-
+<button onclick="window.location.href='index.html'" style="margin: 1em; padding: 0.5em 1em; font-size: 1em;">
+  ⬅️ Retour à l’accueil
+</button>
 <h2>Itinéraire</h2>
 
 <label for="from">Ville de départ (laisser vide = position actuelle) :</label>
@@ -142,8 +144,6 @@
     window.open(`https://www.waze.com/fr/live-map/directions?navigate=yes&from=ll.${fromLat},${fromLon}&to=ll.${toLat},${toLon}`, '_blank');
   };
 </script>
-<button onclick="window.location.href='index.html'" style="margin: 1em; padding: 0.5em 1em; font-size: 1em;">
-  ⬅️ Retour à l’accueil
-</button>
+
 </body>
 </html>
