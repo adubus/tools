@@ -25,6 +25,7 @@
 <div id="results" style="margin-top:20px;"></div>
 
 <button id="geovelo-btn" style="display:none;">Ouvrir dans Geovelo</button>
+<button id="copy-geovelo-btn" style="display:none;">Copier l'URL Geovelo</button>
 <button id="googlemaps-btn" style="display:none;">Ouvrir dans Google Maps</button>
 <button id="applemaps-btn" style="display:none;">Ouvrir dans Apple Plans</button>
 <button id="waze-web-btn" style="display:none;">Ouvrir dans Waze Web</button>
@@ -97,14 +98,17 @@
       À : ${toLat}, ${toLon}
     `;
 
-    document.getElementById('geovelo-btn').style.display = isIOS() ? 'none' : 'inline-block';
+    const isIos = isIOS();
+
+    document.getElementById('geovelo-btn').style.display = isIos ? 'none' : 'inline-block';
+    document.getElementById('copy-geovelo-btn').style.display = isIos ? 'inline-block' : 'none';
     document.getElementById('googlemaps-btn').style.display = 'inline-block';
     document.getElementById('applemaps-btn').style.display = 'inline-block';
     document.getElementById('waze-web-btn').style.display = 'inline-block';
   }
 
   function hideAllButtons() {
-    ['geovelo-btn', 'googlemaps-btn', 'applemaps-btn', 'waze-web-btn'].forEach(id => {
+    ['geovelo-btn', 'copy-geovelo-btn', 'googlemaps-btn', 'applemaps-btn', 'waze-web-btn'].forEach(id => {
       document.getElementById(id).style.display = 'none';
     });
   }
@@ -112,10 +116,19 @@
   function isIOS() {
     return /iPhone|iPad|iPod/i.test(navigator.userAgent);
   }
+
   document.getElementById('geovelo-btn').onclick = () => {
     window.location.href = `https://geovelo.app/fr/route/?from=${fromLon},${fromLat}&to=${toLon},${toLat}`;
   };
 
+  document.getElementById('copy-geovelo-btn').onclick = () => {
+    const url = `https://geovelo.app/fr/route/?from=${fromLon},${fromLat}&to=${toLon},${toLat}`;
+    navigator.clipboard.writeText(url).then(() => {
+      alert('URL Geovelo copiée dans le presse-papier !');
+    }).catch(() => {
+      alert('Erreur lors de la copie de l\'URL.');
+    });
+  };
 
   document.getElementById('googlemaps-btn').onclick = () => {
     window.open(`https://www.google.com/maps/dir/?api=1&origin=${fromLat},${fromLon}&destination=${toLat},${toLon}`, '_blank');
