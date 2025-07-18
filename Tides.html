@@ -2,8 +2,8 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Heures de Marée</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Marées & Coefficients</title>
   <style>
     body { font-family: sans-serif; padding: 20px; background: #f0f8ff; }
     input, button { font-size: 1.2em; padding: 10px; margin: 10px 0; width: 100%; }
@@ -11,56 +11,71 @@
   </style>
 </head>
 <body>
-  <h2>Heures de marée haute / basse avec hauteur</h2>
+  <h2>Marée haute / basse + Coefficient</h2>
   <input type="text" id="city" placeholder="Nom de la ville côtière" />
-  <button onclick="getTideTimes()">Obtenir les heures de marée</button>
+  <button onclick="getTideTimes()">Afficher les marées & coeff</button>
   <div id="result"></div>
 
   <script>
-    const API_KEY = "7499ed9f-fbe6-4297-9220-9fd879366b4a"; // Remplace par ta clé
+    const API_KEY = "7499ed9f-fbe6-4297-9220-9fd879366b4a";  // ta clé ici
+    const MARNAGE_REF = 5.20;      // hauteur de référence à Brest
 
     async function getTideTimes() {
-      const city = document.getElementById("city").value;
+      const city = document.getElementById("city").value.trim();
       const resultDiv = document.getElementById("result");
-      resultDiv.innerHTML = "Recherche des coordonnées...";
+      resultDiv.innerHTML = "Recherche...";
 
       try {
-        const geoUrl = `https://corsproxy.io/?${encodeURIComponent("https://nominatim.openstreetmap.org/search?format=json&q=" + city)}`;
-        const geoResponse = await fetch(geoUrl);
-        const geoData = await geoResponse.json();
+        const geo = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city)}`)
+          .then(r => r.json());
+        if (!geo.length) throw new Error("Ville non trouvée");
 
-        if (!geoData.length) {
-          resultDiv.innerHTML = "Ville non trouvée.";
-          return;
-        }
+        const { lat, lon } = geo[0];
 
-        const lat = geoData[0].lat;
-        const lon = geoData[0].lon;
-
-        resultDiv.innerHTML = "Récupération des données de marée...";
-
-        const tideUrl = `https://corsproxy.io/?${encodeURIComponent(`https://www.worldtides.info/api/v3?extremes&heights&lat=${lat}&lon=${lon}&key=${API_KEY}`)}`;
-        const tideResponse = await fetch(tideUrl);
-        const tideData = await tideResponse.json();
-
-        if (!tideData.extremes || !tideData.extremes.length) {
-          resultDiv.innerHTML = "Aucune donnée de marée trouvée.";
-          return;
-        }
+        const tide = await fetch(`https://corsproxy.io/?${encodeURIComponent(
+          `https://www.worldtides.info/api/v3?extremes&heights&lat=${lat}&lon=${lon}&key=${API_KEY}`
+        )}`)
+          .then(r => r.json());
+        if (!tide.heights || tide.heights.length === 0) throw new Error("Aucune donnée");
 
         const today = new Date().toISOString().split("T")[0];
-        const eventsToday = tideData.extremes.filter(e => e.date.startsWith(today));
+        const events = tide.extremes.filter(e => e.date.startsWith(today))
+          .map(e => {
+            const d = new Date(e.date);
+            const h = d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+            return {
+              type: e.type,
+              time: h,
+              height: tide.heights.find(h2 => {
+                return Math.abs(new Date(h2.dt * 1000).getTime() - d.getTime()) < 5 * 60 * 1000;
+              })?.height || null
+            };
+          });
 
-        let html = `<h3>Résultats pour ${city} (${today})</h3><ul>`;
-        eventsToday.forEach(e => {
-          const heure = new Date(e.date).toLocaleTimeString("fr-FR", { hour: '2-digit', minute: '2-digit' });
-          const hauteur = e.height ? `${e.height.toFixed(2)} m` : "n.c.";
-          html += `<li><strong>${e.type === "High" ? "Marée haute" : "Marée basse"} :</strong> ${heure} (Hauteur : ${hauteur})</li>`;
-        });
+        if (events.length === 0) throw new Error("Pas de marée aujourd'hui");
+
+        const hH = events.filter(e => e.type === "High")[0]?.height;
+        const hB = events.filter(e => e.type === "Low")[0]?.height;
+
+        const coefficient = (hH && hB)
+          ? Math.round(((hH - hB) / MARNAGE_REF) * 100)
+          : null;
+
+        let html = `<h3>${city} – ${today}</h3><ul>`;
+        for (const e of events) {
+          html += `<li><strong>${e.type === 'High'? 'Marée haute' : 'Marée basse'} :</strong> ${e.time} — Hauteur : ${e.height?.toFixed(2) || 'n.c.'} m</li>`;
+        }
         html += "</ul>";
+
+        if (coefficient) {
+          html += `<p><strong>Coefficient estimé :</strong> ${coefficient}</p>`;
+        } else {
+          html += `<p><em>Coefficient non calculable (données manquantes)</em></p>`;
+        }
+
         resultDiv.innerHTML = html;
-      } catch (error) {
-        resultDiv.innerHTML = "Erreur : " + error.message;
+      } catch (err) {
+        resultDiv.innerHTML = `<span style="color:red">Erreur : ${err.message}</span>`;
       }
     }
   </script>
