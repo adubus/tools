@@ -25,7 +25,7 @@
 <body>
   <h2>Itinéraire</h2>
 
-  <label for="from">Ville de départ (laisser vide pour position actuelle) :</label>
+  <label for="from">Ville de départ (laisser vide pour utiliser la position actuelle) :</label>
   <input type="text" id="from" placeholder="Ex: Paris" />
 
   <label for="to">Ville d’arrivée :</label>
@@ -50,3 +50,89 @@
       results.innerHTML = "Recherche en cours...";
 
       if (!to) {
+        results.innerHTML = "Veuillez renseigner une ville d'arrivée.";
+        return;
+      }
+
+      try {
+        // Récupération des coordonnées de la ville d’arrivée
+        const toRes = await fetch(`https://corsproxy.io/?https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(to)}`);
+        const toData = await toRes.json();
+        if (toData.length === 0) {
+          results.innerHTML = "Ville d’arrivée non trouvée.";
+          return;
+        }
+
+        toLat = toData[0].lat;
+        toLon = toData[0].lon;
+
+        if (!from) {
+          // Utiliser la position actuelle si ville de départ non saisie
+          navigator.geolocation.getCurrentPosition(
+            position => {
+              fromLat = position.coords.latitude;
+              fromLon = position.coords.longitude;
+              showResult();
+            },
+            error => {
+              results.innerHTML = "Impossible d'obtenir votre position GPS.";
+            }
+          );
+        } else {
+          // Ville de départ saisie → coordonnées via Nominatim
+          const fromRes = await fetch(`https://corsproxy.io/?https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(from)}`);
+          const fromData = await fromRes.json();
+          if (fromData.length === 0) {
+            results.innerHTML = "Ville de départ non trouvée.";
+            return;
+          }
+          fromLat = fromData[0].lat;
+          fromLon = fromData[0].lon;
+          showResult();
+        }
+      } catch (e) {
+        results.innerHTML = "Erreur lors de la récupération des coordonnées.";
+      }
+    }
+
+    function showResult() {
+      const results = document.getElementById("results");
+      results.innerHTML = `
+        <strong>Coordonnées :</strong><br>
+        De : ${fromLat}, ${fromLon}<br>
+        À : ${toLat}, ${toLon}
+      `;
+
+      // Afficher les bons boutons
+      document.getElementById("geovelo-btn").style.display = isIOS() ? "none" : "inline-block";
+      document.getElementById("googlemaps-btn").style.display = "inline-block";
+      document.getElementById("applemaps-btn").style.display = "inline-block";
+      document.getElementById("waze-web-btn").style.display = "inline-block";
+    }
+
+    function isIOS() {
+      return /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    }
+
+    document.getElementById("geovelo-btn").onclick = () => {
+      const url = `https://geovelo.app/fr/route/?from=${fromLat},${fromLon}&to=${toLat},${toLon}`;
+      window.location.href = url;
+    };
+
+    document.getElementById("googlemaps-btn").onclick = () => {
+      const url = `https://www.google.com/maps/dir/?api=1&origin=${fromLat},${fromLon}&destination=${toLat},${toLon}`;
+      window.open(url, "_blank");
+    };
+
+    document.getElementById("applemaps-btn").onclick = () => {
+      const url = `https://maps.apple.com/?saddr=${fromLat},${fromLon}&daddr=${toLat},${toLon}`;
+      window.open(url, "_blank");
+    };
+
+    document.getElementById("waze-web-btn").onclick = () => {
+      const url = `https://www.waze.com/fr/live-map/directions?navigate=yes&from=ll.${fromLat},${fromLon}&to=ll.${toLat},${toLon}`;
+      window.open(url, "_blank");
+    };
+  </script>
+</body>
+</html>
