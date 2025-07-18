@@ -1,32 +1,27 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Utilitaires</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Accueil</title>
+  <link rel="manifest" href="manifest.json">
   <style>
     body {
       font-family: sans-serif;
-      padding: 2em;
       text-align: center;
+      padding: 2em;
     }
-    a {
+    button {
       display: block;
       margin: 1em auto;
-      padding: 1em;
-      width: 80%;
-      max-width: 400px;
-      background-color: #4CAF50;
-      color: white;
-      text-decoration: none;
-      border-radius: 8px;
+      padding: 1em 2em;
       font-size: 1.2em;
     }
   </style>
 </head>
 <body>
-  <h1>Outils pratiques</h1>
-  <a href="gps.html">📍 Générateur d'itinéraires GPS</a>
-  <a href="calendrier.html">📅 Outils de dates & semaines</a>
+  <h1>Outils disponibles</h1>
+  <button onclick="window.location.href='gps.html'">Générateur d'itinéraires</button>
+  <button onclick="window.location.href='date.html'">Outils de date</button>
 </body>
 </html>
