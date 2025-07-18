@@ -2,137 +2,133 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>GPS Ville</title>
-  <link rel="manifest" href="manifest.json">
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-    }
-    input {
-      margin: 5px 0;
-      width: 100%;
-      padding: 8px;
-    }
-    button {
-      margin-top: 10px;
-      padding: 10px;
-      font-size: 16px;
-    }
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    input { margin: 5px 0; width: 100%; padding: 8px; }
+    button { margin-top: 10px; padding: 10px; font-size: 16px; }
   </style>
 </head>
 <body>
-  <h2>Itinéraire</h2>
 
-  <label for="from">Ville de départ (laisser vide pour utiliser la position actuelle) :</label>
-  <input type="text" id="from" placeholder="Ex: Paris" />
+<h2>Itinéraire</h2>
 
-  <label for="to">Ville d’arrivée :</label>
-  <input type="text" id="to" placeholder="Ex: Arradon" />
+<label for="from">Ville de départ (laisser vide = position actuelle) :</label>
+<input type="text" id="from" placeholder="Ex: Paris" />
 
-  <button onclick="getCoordinates()">Obtenir les coordonnées</button>
+<label for="to">Ville d’arrivée (obligatoire) :</label>
+<input type="text" id="to" placeholder="Ex: Arradon" />
 
-  <div id="results" style="margin-top:20px;"></div>
+<button onclick="getCoordinates()">Obtenir les coordonnées</button>
 
-  <button id="geovelo-btn" style="display:none;">Ouvrir dans Geovelo</button>
-  <button id="googlemaps-btn" style="display:none;">Ouvrir dans Google Maps</button>
-  <button id="applemaps-btn" style="display:none;">Ouvrir dans Apple Plans</button>
-  <button id="waze-web-btn" style="display:none;">Ouvrir dans Waze Web</button>
+<div id="results" style="margin-top:20px;"></div>
 
-  <script>
-    let fromLat, fromLon, toLat, toLon;
+<button id="geovelo-btn" style="display:none;">Ouvrir dans Geovelo</button>
+<button id="googlemaps-btn" style="display:none;">Ouvrir dans Google Maps</button>
+<button id="applemaps-btn" style="display:none;">Ouvrir dans Apple Plans</button>
+<button id="waze-web-btn" style="display:none;">Ouvrir dans Waze Web</button>
 
-    async function getCoordinates() {
-      const from = document.getElementById("from").value.trim();
-      const to = document.getElementById("to").value.trim();
-      const results = document.getElementById("results");
-      results.innerHTML = "Recherche en cours...";
+<script>
+  let fromLat, fromLon, toLat, toLon;
 
-      if (!to) {
-        results.innerHTML = "Veuillez renseigner une ville d'arrivée.";
+  async function getCoordinates() {
+    const from = document.getElementById('from').value.trim();
+    const to = document.getElementById('to').value.trim();
+    const results = document.getElementById('results');
+    results.textContent = 'Recherche en cours...';
+
+    if (!to) {
+      results.textContent = 'Veuillez renseigner une ville d’arrivée.';
+      hideAllButtons();
+      return;
+    }
+
+    try {
+      // Récupérer coordonnées ville arrivée
+      const toRes = await fetch(`https://corsproxy.io/?https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(to)}`);
+      const toData = await toRes.json();
+
+      if (!toData.length) {
+        results.textContent = 'Ville d’arrivée non trouvée.';
+        hideAllButtons();
         return;
       }
 
-      try {
-        // Récupération des coordonnées de la ville d’arrivée
-        const toRes = await fetch(`https://corsproxy.io/?https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(to)}`);
-        const toData = await toRes.json();
-        if (toData.length === 0) {
-          results.innerHTML = "Ville d’arrivée non trouvée.";
+      toLat = toData[0].lat;
+      toLon = toData[0].lon;
+
+      if (from === '') {
+        // Sans ville de départ : récupérer la position GPS
+        navigator.geolocation.getCurrentPosition(pos => {
+          fromLat = pos.coords.latitude;
+          fromLon = pos.coords.longitude;
+          showResultsAndButtons();
+        }, err => {
+          results.textContent = "Impossible d'obtenir la position GPS.";
+          hideAllButtons();
+        });
+      } else {
+        // Avec ville de départ : récupérer ses coordonnées
+        const fromRes = await fetch(`https://corsproxy.io/?https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(from)}`);
+        const fromData = await fromRes.json();
+
+        if (!fromData.length) {
+          results.textContent = 'Ville de départ non trouvée.';
+          hideAllButtons();
           return;
         }
 
-        toLat = toData[0].lat;
-        toLon = toData[0].lon;
-
-        if (!from) {
-          // Utiliser la position actuelle si ville de départ non saisie
-          navigator.geolocation.getCurrentPosition(
-            position => {
-              fromLat = position.coords.latitude;
-              fromLon = position.coords.longitude;
-              showResult();
-            },
-            error => {
-              results.innerHTML = "Impossible d'obtenir votre position GPS.";
-            }
-          );
-        } else {
-          // Ville de départ saisie → coordonnées via Nominatim
-          const fromRes = await fetch(`https://corsproxy.io/?https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(from)}`);
-          const fromData = await fromRes.json();
-          if (fromData.length === 0) {
-            results.innerHTML = "Ville de départ non trouvée.";
-            return;
-          }
-          fromLat = fromData[0].lat;
-          fromLon = fromData[0].lon;
-          showResult();
-        }
-      } catch (e) {
-        results.innerHTML = "Erreur lors de la récupération des coordonnées.";
+        fromLat = fromData[0].lat;
+        fromLon = fromData[0].lon;
+        showResultsAndButtons();
       }
+    } catch (e) {
+      results.textContent = 'Erreur lors de la récupération des données.';
+      hideAllButtons();
     }
+  }
 
-    function showResult() {
-      const results = document.getElementById("results");
-      results.innerHTML = `
-        <strong>Coordonnées :</strong><br>
-        De : ${fromLat}, ${fromLon}<br>
-        À : ${toLat}, ${toLon}
-      `;
+  function showResultsAndButtons() {
+    const results = document.getElementById('results');
+    results.innerHTML = `
+      <strong>Coordonnées :</strong><br>
+      De : ${fromLat}, ${fromLon}<br>
+      À : ${toLat}, ${toLon}
+    `;
 
-      // Afficher les bons boutons
-      document.getElementById("geovelo-btn").style.display = isIOS() ? "none" : "inline-block";
-      document.getElementById("googlemaps-btn").style.display = "inline-block";
-      document.getElementById("applemaps-btn").style.display = "inline-block";
-      document.getElementById("waze-web-btn").style.display = "inline-block";
-    }
+    document.getElementById('geovelo-btn').style.display = isIOS() ? 'none' : 'inline-block';
+    document.getElementById('googlemaps-btn').style.display = 'inline-block';
+    document.getElementById('applemaps-btn').style.display = 'inline-block';
+    document.getElementById('waze-web-btn').style.display = 'inline-block';
+  }
 
-    function isIOS() {
-      return /iPhone|iPad|iPod/i.test(navigator.userAgent);
-    }
+  function hideAllButtons() {
+    ['geovelo-btn', 'googlemaps-btn', 'applemaps-btn', 'waze-web-btn'].forEach(id => {
+      document.getElementById(id).style.display = 'none';
+    });
+  }
 
-    document.getElementById("geovelo-btn").onclick = () => {
-      const url = `https://geovelo.app/fr/route/?from=${fromLat},${fromLon}&to=${toLat},${toLon}`;
-      window.location.href = url;
-    };
+  function isIOS() {
+    return /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  }
 
-    document.getElementById("googlemaps-btn").onclick = () => {
-      const url = `https://www.google.com/maps/dir/?api=1&origin=${fromLat},${fromLon}&destination=${toLat},${toLon}`;
-      window.open(url, "_blank");
-    };
+  document.getElementById('geovelo-btn').onclick = () => {
+    window.location.href = `https://geovelo.app/fr/route/?from=${fromLat},${fromLon}&to=${toLat},${toLon}`;
+  };
 
-    document.getElementById("applemaps-btn").onclick = () => {
-      const url = `https://maps.apple.com/?saddr=${fromLat},${fromLon}&daddr=${toLat},${toLon}`;
-      window.open(url, "_blank");
-    };
+  document.getElementById('googlemaps-btn').onclick = () => {
+    window.open(`https://www.google.com/maps/dir/?api=1&origin=${fromLat},${fromLon}&destination=${toLat},${toLon}`, '_blank');
+  };
 
-    document.getElementById("waze-web-btn").onclick = () => {
-      const url = `https://www.waze.com/fr/live-map/directions?navigate=yes&from=ll.${fromLat},${fromLon}&to=ll.${toLat},${toLon}`;
-      window.open(url, "_blank");
-    };
-  </script>
+  document.getElementById('applemaps-btn').onclick = () => {
+    window.open(`https://maps.apple.com/?saddr=${fromLat},${fromLon}&daddr=${toLat},${toLon}`, '_blank');
+  };
+
+  document.getElementById('waze-web-btn').onclick = () => {
+    window.open(`https://www.waze.com/fr/live-map/directions?navigate=yes&from=ll.${fromLat},${fromLon}&to=ll.${toLat},${toLon}`, '_blank');
+  };
+</script>
+
 </body>
 </html>
