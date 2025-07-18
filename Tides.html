@@ -1,35 +1,47 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Heures de Marée</title>
   <style>
-    body { font-family: sans-serif; padding: 20px; background: #f0f8ff; }
-    input, button { font-size: 1.2em; padding: 10px; margin: 10px 0; width: 100%; }
-    #result { margin-top: 20px; }
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 2rem;
+    }
+    input, button {
+      padding: 0.5rem;
+      margin: 0.5rem;
+      font-size: 1rem;
+    }
+    #result {
+      margin-top: 1rem;
+    }
   </style>
 </head>
 <body>
-  <h2>Heures de marée haute / basse</h2>
-  <input type="text" id="city" placeholder="Nom de la ville côtière" />
-  <button onclick="getTideTimes()">Obtenir les heures de marée</button>
+  <h1>Horaires de Marée</h1>
+  <p>Entrez le nom d'une ville côtière :</p>
+  <input type="text" id="ville" placeholder="Ex: La Rochelle" />
+  <button onclick="obtenirMaree()">Obtenir les marées</button>
+
   <div id="result"></div>
 
   <script>
-    const API_KEY = "7499ed9f-fbe6-4297-9220-9fd879366b4a"; // Remplace par ta vraie clé
+    const API_KEY = "7499ed9f-fbe6-4297-9220-9fd879366b4a"; // ← Colle ta clé ici
 
-    async function getTideTimes() {
-      const city = document.getElementById("city").value;
+    async function obtenirMaree() {
+      const ville = document.getElementById("ville").value.trim();
       const resultDiv = document.getElementById("result");
-      resultDiv.innerHTML = "Recherche des coordonnées...";
+      resultDiv.innerHTML = "Chargement...";
 
       try {
-        const geoUrl = `https://corsproxy.io/?${encodeURIComponent("https://nominatim.openstreetmap.org/search?format=json&q=" + city)}`;
-        const geoResponse = await fetch(geoUrl);
+        // Étape 1 : Obtenir les coordonnées GPS de la ville
+        const geoResponse = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(ville)}`);
         const geoData = await geoResponse.json();
 
-        if (!geoData.length) {
+        if (!geoData || geoData.length === 0) {
           resultDiv.innerHTML = "Ville non trouvée.";
           return;
         }
@@ -37,29 +49,24 @@
         const lat = geoData[0].lat;
         const lon = geoData[0].lon;
 
-        resultDiv.innerHTML = "Récupération des données de marée...";
-
-        const tideUrl = `https://corsproxy.io/?${encodeURIComponent(`https://www.worldtides.info/api/v3?extremes&lat=${lat}&lon=${lon}&key=${API_KEY}`)}`;
-        const tideResponse = await fetch(tideUrl);
+        // Étape 2 : Appeler WorldTides.info
+        const tideResponse = await fetch(`https://www.worldtides.info/api/v3?heights&date=today&lat=${lat}&lon=${lon}&key=${API_KEY}`);
         const tideData = await tideResponse.json();
 
-        if (!tideData.extremes || !tideData.extremes.length) {
-          resultDiv.innerHTML = "Aucune donnée de marée trouvée.";
+        if (!tideData.heights || tideData.heights.length === 0) {
+          resultDiv.innerHTML = "Aucune donnée de marée disponible.";
           return;
         }
 
-        const today = new Date().toISOString().split("T")[0];
-        const eventsToday = tideData.extremes.filter(e => e.date.startsWith(today));
+        const horaires = tideData.heights.map(h => {
+          const date = new Date(h.dt * 1000);
+          return `🕒 ${date.toLocaleTimeString()} - ${h.height.toFixed(2)} m`;
+        }).join("<br>");
 
-        let html = `<h3>Résultats pour ${city} (${today})</h3><ul>`;
-        eventsToday.forEach(e => {
-          const heure = new Date(e.date).toLocaleTimeString("fr-FR", { hour: '2-digit', minute: '2-digit' });
-          html += `<li><strong>${e.type === "High" ? "Marée haute" : "Marée basse"} :</strong> ${heure}</li>`;
-        });
-        html += "</ul>";
-        resultDiv.innerHTML = html;
+        resultDiv.innerHTML = `Coordonnées de ${ville} : ${lat}, ${lon}<br><br><strong>Heures de marée :</strong><br>${horaires}`;
       } catch (error) {
-        resultDiv.innerHTML = "Erreur : " + error.message;
+        console.error(error);
+        resultDiv.innerHTML = "Erreur lors de la récupération des données.";
       }
     }
   </script>
