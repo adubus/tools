@@ -112,10 +112,10 @@
   function isIOS() {
     return /iPhone|iPad|iPod/i.test(navigator.userAgent);
   }
-
   document.getElementById('geovelo-btn').onclick = () => {
-    window.location.href = `https://geovelo.app/fr/route/?from=${fromLat},${fromLon}&to=${toLat},${toLon}`;
+    window.location.href = `https://geovelo.app/fr/route/?from=${fromLon},${fromLat}&to=${toLon},${toLat}`;
   };
+
 
   document.getElementById('googlemaps-btn').onclick = () => {
     window.open(`https://www.google.com/maps/dir/?api=1&origin=${fromLat},${fromLon}&destination=${toLat},${toLon}`, '_blank');
