@@ -2,140 +2,111 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>GPS Ville à Ville</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GPS Ville</title>
+  <link rel="manifest" href="manifest.json" />
   <style>
-    body { font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; }
-    input, button { padding: 10px; margin: 5px 0; width: 100%; font-size: 1em; }
-    #actions { display: none; margin-top: 10px; gap: 5px; flex-wrap: wrap; }
-    #actions button { width: 100%; }
-    .inline-buttons { display: flex; justify-content: space-between; gap: 4%; }
-    .link { font-size: 0.9em; color: #555; word-wrap: break-word; }
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      background: #f4f4f4;
+    }
+    input, button {
+      font-size: 16px;
+      padding: 8px;
+      margin: 5px 0;
+      width: 100%;
+    }
+    .link-buttons {
+      margin-top: 15px;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      margin-bottom: 10px;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
   </style>
 </head>
 <body>
-  <h2>🚲 Itinéraire vélo</h2>
+
+  <h2>Générateur de liens GPS</h2>
 
   <label>Ville de départ :</label>
-  <input id="startCity" placeholder="Ex: Lille" />
-  <div class="inline-buttons">
-    <button onclick="pasteClipboard('startCity')">📋 Coller</button>
-    <button onclick="getCoordinates('start')">🔍 Coordonnées</button>
-  </div>
-  <p id="startResult">–</p>
+  <input type="text" id="from" placeholder="Ex : Paris" />
 
-  <label>Ville d’arrivée :</label>
-  <input id="endCity" placeholder="Ex: Tournai" />
-  <div class="inline-buttons">
-    <button onclick="pasteClipboard('endCity')">📋 Coller</button>
-    <button onclick="getCoordinates('end')">🔍 Coordonnées</button>
-  </div>
-  <p id="endResult">–</p>
+  <label>Ville d'arrivée :</label>
+  <input type="text" id="to" placeholder="Ex : Arradon" />
 
-  <div id="actions">
-    <button onclick="copyGeovelo()">📎 Copier le lien Geovelo</button>
-    <button id="geoveloButton" onclick="openGeovelo()">🌍 Ouvrir dans Geovelo (⚠️ iOS ne charge pas l’itinéraire)</button>
-    <button onclick="openGoogleMaps()">🚲 Ouvrir dans Google Maps</button>
-    <button onclick="openAppleMaps()">🍏 Ouvrir dans Apple Plans</button>
-    <button onclick="openWaze()">🧭 Ouvrir dans Waze</button>
-    <p class="link" id="linkDisplay"></p>
+  <button id="getCoords">Obtenir les liens</button>
+
+  <div class="link-buttons">
+    <div id="geoveloBtn"></div>
+    <div id="googleMapsBtn"></div>
+    <div id="appleMapsBtn"></div>
+    <div id="wazeBtn"></div>
   </div>
 
   <script>
-    let coords = {
-      start: { lat: null, lon: null },
-      end: { lat: null, lon: null }
-    };
+    async function getCoords(city) {
+      const url = "https://corsproxy.io/?" + encodeURIComponent(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city)}`);
+      const response = await fetch(url);
+      const data = await response.json();
+      if (data && data.length > 0) {
+        return {
+          lat: data[0].lat,
+          lon: data[0].lon
+        };
+      }
+      throw new Error("Ville introuvable : " + city);
+    }
 
-    async function pasteClipboard(fieldId) {
+    function updateGeoveloLink(fromLat, fromLon, toLat, toLon) {
+      const url = `https://geovelo.app/fr/route/?from=${fromLat},${fromLon}&to=${toLat},${toLon}`;
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      if (!isIOS) {
+        document.getElementById("geoveloBtn").innerHTML = `<a href="${url}" target="_blank"><button>Ouvrir dans Geovelo</button></a>`;
+      } else {
+        document.getElementById("geoveloBtn").innerHTML = "";
+      }
+    }
+
+    function updateGoogleMapsLink(fromLat, fromLon, toLat, toLon) {
+      const url = `https://www.google.com/maps/dir/?api=1&origin=${fromLat},${fromLon}&destination=${toLat},${toLon}`;
+      document.getElementById("googleMapsBtn").innerHTML = `<a href="${url}" target="_blank"><button>Ouvrir dans Google Maps</button></a>`;
+    }
+
+    function updateAppleMapsLink(fromLat, fromLon, toLat, toLon) {
+      const url = `http://maps.apple.com/?saddr=${fromLat},${fromLon}&daddr=${toLat},${toLon}`;
+      document.getElementById("appleMapsBtn").innerHTML = `<a href="${url}" target="_blank"><button>Ouvrir dans Apple Plans</button></a>`;
+    }
+
+    function updateWazeLink(toLat, toLon) {
+      const url = `https://waze.com/ul?ll=${toLat},${toLon}&navigate=yes`;
+      document.getElementById("wazeBtn").innerHTML = `<a href="${url}" target="_blank"><button>Ouvrir dans Waze</button></a>`;
+    }
+
+    document.getElementById("getCoords").addEventListener("click", async () => {
+      const fromCity = document.getElementById("from").value.trim();
+      const toCity = document.getElementById("to").value.trim();
+      if (!fromCity || !toCity) {
+        alert("Veuillez remplir les deux champs.");
+        return;
+      }
+
       try {
-        const text = await navigator.clipboard.readText();
-        document.getElementById(fieldId).value = text;
-      } catch (e) {
-        alert("❌ Autorisation presse-papiers refusée.");
-      }
-    }
+        const from = await getCoords(fromCity);
+        const to = await getCoords(toCity);
 
-    async function getCoordinates(type) {
-      const city = document.getElementById(type + "City").value;
-      if (!city) return;
-
-      const baseUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city)}`;
-      const url = `https://corsproxy.io/?${encodeURIComponent(baseUrl)}`;
-
-      try {
-        const response = await fetch(url);
-        const data = await response.json();
-
-        if (data.length > 0) {
-          coords[type].lat = data[0].lat;
-          coords[type].lon = data[0].lon;
-          document.getElementById(type + "Result").innerText = `Coordonnées : ${coords[type].lon},${coords[type].lat}`;
-          checkBothCities();
-        } else {
-          document.getElementById(type + "Result").innerText = "Ville non trouvée.";
-        }
-      } catch (err) {
-        document.getElementById(type + "Result").innerText = "Erreur de récupération.";
-      }
-    }
-
-    function checkBothCities() {
-      if (coords.start.lat && coords.end.lat) {
-        const geoveloLink = generateGeoveloUrl();
-        document.getElementById("linkDisplay").innerText = geoveloLink;
-        document.getElementById("actions").style.display = 'flex';
-      }
-    }
-
-    function generateGeoveloUrl() {
-      return `https://geovelo.app/fr/route/?from=${coords.start.lon},${coords.start.lat}&to=${coords.end.lon},${coords.end.lat}`;
-    }
-
-    function generateGoogleMapsUrl() {
-      return `https://www.google.com/maps/dir/?api=1&origin=${coords.start.lat},${coords.start.lon}&destination=${coords.end.lat},${coords.end.lon}&travelmode=bicycling`;
-    }
-
-    function generateAppleMapsUrl() {
-      return `maps://?saddr=${coords.start.lat},${coords.start.lon}&daddr=${coords.end.lat},${coords.end.lon}&dirflg=b`;
-    }
-
-    function generateWazeUrl() {
-      return `https://waze.com/ul?ll=${coords.end.lat},${coords.end.lon}&navigate=yes`;
-    }
-
-    function copyGeovelo() {
-      const url = generateGeoveloUrl();
-      navigator.clipboard.writeText(url);
-      alert("✅ Lien Geovelo copié !");
-    }
-
-    function openGeovelo() {
-      const url = generateGeoveloUrl();
-      window.open(url, "_blank");
-    }
-
-    function openGoogleMaps() {
-      const url = generateGoogleMapsUrl();
-      window.open(url, "_blank");
-    }
-
-    function openAppleMaps() {
-      const url = generateAppleMapsUrl();
-      window.location.href = url;
-    }
-
-    function openWaze() {
-      const url = generateWazeUrl();
-      window.open(url, "_blank");
-    }
-
-    // ⛔ Masquer Geovelo sur iOS
-    document.addEventListener("DOMContentLoaded", () => {
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-      if (isIOS) {
-        const geoBtn = document.getElementById("geoveloButton");
-        if (geoBtn) geoBtn.style.display = "none";
+        updateGeoveloLink(from.lat, from.lon, to.lat, to.lon);
+        updateGoogleMapsLink(from.lat, from.lon, to.lat, to.lon);
+        updateAppleMapsLink(from.lat, from.lon, to.lat, to.lon);
+        updateWazeLink(to.lat, to.lon);
+      } catch (error) {
+        alert(error.message);
       }
     });
   </script>
