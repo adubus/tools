@@ -71,7 +71,7 @@
       });
     }
 
- function exporterCalendrier() {
+    function exporterCalendrier() {
       const annee = parseInt(document.getElementById("yearInput").value);
       const feries = getFeries(annee);
       let ics = "BEGIN:VCALENDAR\nVERSION:2.0\nCALSCALE:GREGORIAN\n";
