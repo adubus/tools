@@ -4,7 +4,12 @@
   <meta charset="UTF-8" />
   <title>Jours fériés en France</title>
   <link rel="stylesheet" href="style.css">
-  
+  <style>
+    .weekend {
+  color: red;
+  font-weight: bold;
+}
+  </style>
 </head>
 <body>
   <h1>Jours fériés en France</h1>
@@ -40,6 +45,12 @@ async function getHolidays() {
     holidays.forEach(holiday => {
       const date = new Date(holiday.date);
       const li = document.createElement("li");
+
+      // Ajoute une classe si c'est samedi (6) ou dimanche (0)
+      if (date.getDay() === 6 || date.getDay() === 0) {
+        li.classList.add("weekend");
+      }
+     
       li.textContent = `${formatter.format(date)} – ${holiday.localName}`;
       list.appendChild(li);
     });
