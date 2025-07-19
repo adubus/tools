@@ -6,7 +6,6 @@
   <title>Jours fériés en France</title>
   <link rel="stylesheet" href="style.css">
   <style>
-    .weekend { color: red;   font-weight: bold; }
     li.saturday, li.sunday { color: red;}
   </style>
 </head>
@@ -14,7 +13,6 @@
  <button onclick="window.location.href='index.html'">Retour à la page d'accueil</button>
   <h1>Jours fériés</h1>
   <select id="yearSelect" onchange="afficherFeries()"></select>
-  <!--<input type="number" id="yearInput" min="1900" max="2100" value="" placeholder="Entrez une année" onchange="afficherFeries()" />-->
   <ul id="feries"></ul>
   <button onclick="exporterCalendrier()">📅 Ajouter au calendrier</button>
 
