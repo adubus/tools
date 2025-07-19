@@ -1,71 +1,66 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Météo</title>
-  <style>
-    <!--body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      background-color: #e0f7fa;
-      padding: 2em;
-    }
-    input, button {
-      font-size: 1.2em;
-      padding: 0.5em;
-      margin: 1em;
-    }-->
-    #meteo {
-      font-size: 1.2em;
-      margin-top: 1em;
-    }
-    img {
-      vertical-align: middle;
-    }
-  </style>
 </head>
 <body>
-  <h1>🌦️ Météo</h1>
-  <input type="text" id="ville" placeholder="Entrez une ville">
-  <button onclick="rechercherMeteo()">Rechercher</button>
-  <div id="meteo"></div>
+  <h1>Météo du jour</h1>
+  <input type="text" id="ville" placeholder="Entrez une ville" />
+  <button onclick="obtenirMeteo()">Rechercher</button>
+  <div id="resultat"></div>
 
   <script>
-    function degToCompass(num) {
-      const directions = ["Nord", "Nord-Est", "Est", "Sud-Est", "Sud", "Sud-Ouest", "Ouest", "Nord-Ouest"];
-      const index = Math.round(num / 45) % 8;
-      return directions[index];
-    }
+    const apiKey = "281eec27318c19122b887f323200a827"; // remplace par ta vraie clé OpenWeather (One Call 3.0 activée)
 
-    async function rechercherMeteo() {
-      const ville = document.getElementById("ville").value.trim();
-      const apiKey = "281eec27318c19122b887f323200a827"; // 🔑 Remplace par ta vraie clé API OpenWeatherMap
-      const url = `https://api.openweathermap.org/data/2.5/weather?q=${ville}&appid=${apiKey}&units=metric&lang=fr`;
-
-      const meteoDiv = document.getElementById("meteo");
-      meteoDiv.innerHTML = "Chargement...";
+    async function obtenirMeteo() {
+      const ville = document.getElementById("ville").value;
+      const resultat = document.getElementById("resultat");
+      resultat.innerHTML = "Chargement...";
 
       try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error("Ville introuvable");
-        const data = await response.json();
+        // 1. Obtenir les coordonnées de la ville
+        const geoRes = await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=${ville}&limit=1&appid=${apiKey}`);
+        const geoData = await geoRes.json();
+        if (geoData.length === 0) throw new Error("Ville introuvable");
 
-        const icone = data.weather[0].icon;
-        const ventOrientation = degToCompass(data.wind.deg);
-        const ventVitesse = data.wind.speed;
+        const { lat, lon, name } = geoData[0];
 
-        meteoDiv.innerHTML = `
-          <h2>${data.name}</h2>
-          <p><img src="https://openweathermap.org/img/wn/${icone}@2x.png" alt="météo"> ${data.weather[0].description}</p>
-          <p>🌡️ Température actuelle : ${data.main.temp} °C</p>
-          <p>🔻 Min : ${data.main.temp_min} °C &nbsp;&nbsp; 🔺 Max : ${data.main.temp_max} °C</p>
-          <p>💨 Vent : ${ventVitesse} m/s (${ventOrientation})</p>
+        // 2. Obtenir les infos météo détaillées (One Call API 3.0)
+        const meteoRes = await fetch(`https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=fr&exclude=minutely,hourly`);
+        const meteoData = await meteoRes.json();
+
+        const today = meteoData.daily[0]; // météo du jour
+        const tempMin = today.temp.min;
+        const tempMax = today.temp.max;
+        const vent = meteoData.current.wind_speed;
+        const orientationVent = meteoData.current.wind_deg;
+        const uv = meteoData.current.uvi;
+        const pluie = today.rain || 0; // mm de précipitation
+        const ensoleillement = today.sunset && today.sunrise ? ((today.sunset - today.sunrise) / 3600).toFixed(1) : "?";
+
+        const orientation = degToCardinal(orientationVent);
+
+        resultat.innerHTML = `
+          <h2>Météo à ${name}</h2>
+          <ul>
+            <li><strong>Temp. min :</strong> ${tempMin} °C</li>
+            <li><strong>Temp. max :</strong> ${tempMax} °C</li>
+            <li><strong>Vent :</strong> ${vent} km/h (${orientation})</li>
+            <li><strong>Indice UV :</strong> ${uv}</li>
+            <li><strong>Précipitations :</strong> ${pluie} mm</li>
+            <li><strong>Ensoleillement :</strong> ${ensoleillement} h</li>
+          </ul>
         `;
-      } catch (error) {
-        meteoDiv.innerHTML = `<p style="color: red;">Erreur : ${error.message}</p>`;
+      } catch (err) {
+        resultat.innerHTML = "Erreur : " + err.message;
       }
+    }
+
+    function degToCardinal(deg) {
+      const directions = ["N", "NE", "E", "SE", "S", "SO", "O", "NO"];
+      return directions[Math.round(deg / 45) % 8];
     }
   </script>
 </body>
