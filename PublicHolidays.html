@@ -107,7 +107,7 @@ ics += `BEGIN:VEVENT\nSUMMARY:${jour.nom}\nDTSTART;VALUE=DATE:${date}\nDTEND;VAL
     // Initialisation
     const currentYear = new Date().getFullYear();
     const select = document.getElementById("yearSelect");
-    for (let y = currentYear - 1; y <= currentYear + 5; y++) {
+    for (let y = currentYear - 1; y <= currentYear + 6; y++) {
       const option = document.createElement("option");
       option.value = y;
       option.textContent = y;
