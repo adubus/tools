@@ -77,13 +77,14 @@
         result.innerHTML = `
           <h2>${data.name}</h2>
           <div class="info"><img src="https://openweathermap.org/img/wn/${icon}@2x.png" alt="${description}" class="icon" /><strong>${description}</strong></div>
-          <div class="info"><img src="https://img.icons8.com/ios-filled/50/temperature.png" class="icon" alt="Température" />Température : ${temperature} °C (min : ${tempMin}°C, max : ${tempMax}°C)</div>
-          <div class="info"><img src="https://img.icons8.com/ios-filled/50/wind.png" class="icon" alt="Vent" />Vent : ${windSpeed} m/s (${windDir})</div>
-          <div class="info"><img src="https://img.icons8.com/ios-filled/50/humidity.png" class="icon" alt="Humidité" />Humidité : ${humidity}%</div>
-          <div class="info"><img src="https://img.icons8.com/ios-filled/50/barometer.png" class="icon" alt="Pression" />Pression : ${pressure} hPa</div>
-          <div class="info"><img src="https://img.icons8.com/ios-filled/50/clouds.png" class="icon" alt="Nuages" />Nuages : ${cloudiness}%</div>
-          <div class="info"><img src="https://img.icons8.com/ios-filled/50/sunrise.png" class="icon" alt="Lever du soleil" />Lever du soleil : ${sunrise}</div>
-          <div class="info"><img src="https://img.icons8.com/ios-filled/50/sunset.png" class="icon" alt="Coucher du soleil" />Coucher du soleil : ${sunset}</div>
+          <div class="info">🌡️ ${temperature} °C</div>
+          <div class="info">🔻 ${tempMin} °C &nbsp;&nbsp; 🔺 ${tempMax} °C</div>
+          <div class="info">💨 ${windSpeed} m/s (${windDir})</div>
+          <div class="info">💧 ${humidity}%</div>
+          <div class="info">🔽 ${pressure} hPa</div>
+          <div class="info">☁️ ${cloudiness}%</div>
+          <div class="info">🌅 ${sunrise}</div>
+          <div class="info">🌇 ${sunset}</div>
         `;
 
       } catch (error) {
