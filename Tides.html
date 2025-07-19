@@ -92,11 +92,12 @@
         }
 
         // 4) Filtrer marées par date locale (jour courant)
+        const nowUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+        
         const events = tide.extremes.filter(e => {
           const d = new Date(e.date);
-          return d.getDate() === now.getDate() &&
-                 d.getMonth() === now.getMonth() &&
-                 d.getFullYear() === now.getFullYear();
+          const dUTC = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+          return dUTC.getTime() === nowUTC.getTime();
         });
 
         if (!events.length) {
