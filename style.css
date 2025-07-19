@@ -41,6 +41,18 @@ button {
   cursor: pointer;
 }
 
+a.button { 
+  display: block; 
+  background: #0077b6;    <!--#4CAF50; -->
+  color: white; 
+  padding: 0.5em; 
+  margin: 0.3em 0; 
+  text-align: center; 
+  text-decoration: none; 
+  border-radius: 5px; 
+}
+
+
 button:hover {
   background-color: #005f8a;
 }
