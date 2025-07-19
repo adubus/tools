@@ -26,29 +26,44 @@
   </style>
 </head>
 <body>
-  <h1>🌤️ Météo par ville</h1>
-  <input type="text" id="ville" placeholder="Entrez une ville" />
+  <h1>🌦️ Météo</h1>
+  <input type="text" id="ville" placeholder="Entrez une ville">
   <button onclick="rechercherMeteo()">Rechercher</button>
   <div id="meteo"></div>
 
   <script>
+    function degToCompass(num) {
+      const directions = ["Nord", "Nord-Est", "Est", "Sud-Est", "Sud", "Sud-Ouest", "Ouest", "Nord-Ouest"];
+      const index = Math.round(num / 45) % 8;
+      return directions[index];
+    }
+
     async function rechercherMeteo() {
-      const ville = document.getElementById("ville").value;
-      const apiKey = "281eec27318c19122b887f323200a827"; // Remplace par ta vraie clé OpenWeatherMap
+      const ville = document.getElementById("ville").value.trim();
+      const apiKey = "TA_CLE_API"; // 🔑 Remplace par ta vraie clé API OpenWeatherMap
       const url = `https://api.openweathermap.org/data/2.5/weather?q=${ville}&appid=${apiKey}&units=metric&lang=fr`;
+
+      const meteoDiv = document.getElementById("meteo");
+      meteoDiv.innerHTML = "Chargement...";
 
       try {
         const response = await fetch(url);
         if (!response.ok) throw new Error("Ville introuvable");
         const data = await response.json();
+
         const icone = data.weather[0].icon;
-        document.getElementById("meteo").innerHTML = `
-          <p><strong>${data.name}</strong> - ${data.weather[0].description}</p>
-          <p>🌡️ Température : ${data.main.temp} °C</p>
-          <img src="https://openweathermap.org/img/wn/${icone}@2x.png" alt="icône météo">
+        const ventOrientation = degToCompass(data.wind.deg);
+        const ventVitesse = data.wind.speed;
+
+        meteoDiv.innerHTML = `
+          <h2>${data.name}</h2>
+          <p><img src="https://openweathermap.org/img/wn/${icone}@2x.png" alt="météo"> ${data.weather[0].description}</p>
+          <p>🌡️ Température actuelle : ${data.main.temp} °C</p>
+          <p>🔻 Min : ${data.main.temp_min} °C &nbsp;&nbsp; 🔺 Max : ${data.main.temp_max} °C</p>
+          <p>💨 Vent : ${ventVitesse} m/s (${ventOrientation})</p>
         `;
-      } catch (e) {
-        document.getElementById("meteo").innerHTML = `<p style="color:red;">Erreur : ${e.message}</p>`;
+      } catch (error) {
+        meteoDiv.innerHTML = `<p style="color: red;">Erreur : ${error.message}</p>`;
       }
     }
   </script>
