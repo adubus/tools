@@ -72,7 +72,7 @@
     }
 
     function exporterCalendrier() {
-      const annee = parseInt(document.getElementById("yearInput").value);
+      const annee = parseInt(document.getElementById("yearSelect").value);
       const feries = getFeries(annee);
       let ics = "BEGIN:VCALENDAR\nVERSION:2.0\nCALSCALE:GREGORIAN\n";
       feries.forEach(jour => {
