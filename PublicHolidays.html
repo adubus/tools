@@ -64,8 +64,9 @@
       feries.forEach(jour => {
         const li = document.createElement("li");
         const options = { weekday: "long", year: "numeric", month: "long", day: "numeric" };
+        const dateStr = jour.date.toLocaleDateString("fr-FR", options);
         const jourSemaine = jour.date.getDay();
-        li.textContent = `${jour.nom} : ${jour.date.toLocaleDateString("fr-FR", options)}`;
+        li.textContent = `${dateStr} : ${jour.nom}`;
         if (jourSemaine === 0) li.classList.add("sunday");
         if (jourSemaine === 6) li.classList.add("saturday");
         feriesList.appendChild(li);
