@@ -59,15 +59,16 @@
           <p>🌡️ Température actuelle : ${data.main.temp} °C</p>
           <p>🔻 Min : ${data.main.temp_min} °C &nbsp;&nbsp; 🔺 Max : ${data.main.temp_max} °C</p>
           <p>💨 Vent : ${ventVitesse} m/s (${ventOrientation})</p>
-        `;
 
-        result.innerHTML += `
         <p>Humidité : ${humidity}%</p>
         <p>Pression : ${pressure} hPa</p>
         <p>Nuages : ${cloudiness}%</p>
         <p>Lever du soleil : ${sunrise}</p>
         <p>Coucher du soleil : ${sunset}</p>
-`;
+          
+        `;
+
+
       } catch (error) {
         meteoDiv.innerHTML = `<p style="color: red;">Erreur : ${error.message}</p>`;
       }
