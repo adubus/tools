@@ -76,15 +76,14 @@
 
         result.innerHTML = `
           <h2>${data.name}</h2>
-          <p class="info"><strong>${description}</strong></p>
-          <img src="https://openweathermap.org/img/wn/${icon}@2x.png" alt="${description}" />
-          <p class="info">Température : ${temperature} °C (min : ${tempMin}°C, max : ${tempMax}°C)</p>
-          <p class="info">Vent : ${windSpeed} m/s (${windDir})</p>
-          <p class="info">Humidité : ${humidity}%</p>
-          <p class="info">Pression : ${pressure} hPa</p>
-          <p class="info">Nuages : ${cloudiness}%</p>
-          <p class="info">Lever du soleil : ${sunrise}</p>
-          <p class="info">Coucher du soleil : ${sunset}</p>
+          <div class="info"><img src="https://openweathermap.org/img/wn/${icon}@2x.png" alt="${description}" class="icon" /><strong>${description}</strong></div>
+          <div class="info"><img src="https://img.icons8.com/ios-filled/50/temperature.png" class="icon" alt="Température" />Température : ${temperature} °C (min : ${tempMin}°C, max : ${tempMax}°C)</div>
+          <div class="info"><img src="https://img.icons8.com/ios-filled/50/wind.png" class="icon" alt="Vent" />Vent : ${windSpeed} m/s (${windDir})</div>
+          <div class="info"><img src="https://img.icons8.com/ios-filled/50/humidity.png" class="icon" alt="Humidité" />Humidité : ${humidity}%</div>
+          <div class="info"><img src="https://img.icons8.com/ios-filled/50/barometer.png" class="icon" alt="Pression" />Pression : ${pressure} hPa</div>
+          <div class="info"><img src="https://img.icons8.com/ios-filled/50/clouds.png" class="icon" alt="Nuages" />Nuages : ${cloudiness}%</div>
+          <div class="info"><img src="https://img.icons8.com/ios-filled/50/sunrise.png" class="icon" alt="Lever du soleil" />Lever du soleil : ${sunrise}</div>
+          <div class="info"><img src="https://img.icons8.com/ios-filled/50/sunset.png" class="icon" alt="Coucher du soleil" />Coucher du soleil : ${sunset}</div>
         `;
 
       } catch (error) {
