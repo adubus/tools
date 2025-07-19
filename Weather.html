@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Météo</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #e0f7fa;
+      padding: 2em;
+    }
+    input, button {
+      font-size: 1.2em;
+      padding: 0.5em;
+      margin: 1em;
+    }
+    #meteo {
+      font-size: 1.2em;
+      margin-top: 1em;
+    }
+    img {
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+  <h1>🌤️ Météo par ville</h1>
+  <input type="text" id="ville" placeholder="Entrez une ville" />
+  <button onclick="rechercherMeteo()">Rechercher</button>
+  <div id="meteo"></div>
+
+  <script>
+    async function rechercherMeteo() {
+      const ville = document.getElementById("ville").value;
+      const apiKey = "281eec27318c19122b887f323200a827"; // Remplace par ta vraie clé OpenWeatherMap
+      const url = `https://api.openweathermap.org/data/2.5/weather?q=${ville}&appid=${apiKey}&units=metric&lang=fr`;
+
+      try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("Ville introuvable");
+        const data = await response.json();
+        const icone = data.weather[0].icon;
+        document.getElementById("meteo").innerHTML = `
+          <p><strong>${data.name}</strong> - ${data.weather[0].description}</p>
+          <p>🌡️ Température : ${data.main.temp} °C</p>
+          <img src="https://openweathermap.org/img/wn/${icone}@2x.png" alt="icône météo">
+        `;
+      } catch (e) {
+        document.getElementById("meteo").innerHTML = `<p style="color:red;">Erreur : ${e.message}</p>`;
+      }
+    }
+  </script>
+</body>
+</html>
