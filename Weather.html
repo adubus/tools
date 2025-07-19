@@ -1,29 +1,25 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Météo</title>
   <style>
-    body {
+    <!--body {
       font-family: Arial, sans-serif;
       text-align: center;
       background-color: #e0f7fa;
       padding: 2em;
     }
     input, button {
-      font-size: 1.1em;
+      font-size: 1.2em;
       padding: 0.5em;
-      margin: 0.5em;
-    }
+      margin: 1em;
+    }-->
     #meteo {
-      font-size: 1.1em;
+      font-size: 1.2em;
       margin-top: 1em;
-      padding: 1em;
-      border-radius: 10px;
-      background: #ffffffdd;
-      display: inline-block;
-      text-align: left;
     }
     img {
       vertical-align: middle;
@@ -45,7 +41,7 @@
 
     async function rechercherMeteo() {
       const ville = document.getElementById("ville").value.trim();
-      const apiKey = "TA_CLE_API"; // 🔑 Remplace par ta vraie clé API OpenWeatherMap
+      const apiKey = "281eec27318c19122b887f323200a827"; // 🔑 Remplace par ta vraie clé API OpenWeatherMap
       const url = `https://api.openweathermap.org/data/2.5/weather?q=${ville}&appid=${apiKey}&units=metric&lang=fr`;
 
       const meteoDiv = document.getElementById("meteo");
