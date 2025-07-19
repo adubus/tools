@@ -71,28 +71,40 @@
       });
     }
 
-    function exporterCalendrier() {
-      const annee = parseInt(document.getElementById("yearSelect").value);
-      const feries = getFeries(annee);
-      let ics = "BEGIN:VCALENDAR\nVERSION:2.0\nCALSCALE:GREGORIAN\n";
-      feries.forEach(jour => {
-        const date = jour.date.toISOString().split("T")[0].replace(/-/g, "");
-        const dateEnd = new Date(jour.date);
-        dateEnd.setDate(jour.date.getDate() + 1);
-        const dateFin = dateEnd.toISOString().split("T")[0].replace(/-/g, "");
-        ics += `BEGIN:VEVENT\nSUMMARY:${jour.nom}\nDTSTART;VALUE=DATE:${date}\nDTEND;VALUE=DATE:${dateFin}\nEND:VEVENT\n`;
-      });
-      ics += "END:VCALENDAR";
-      const blob = new Blob([ics], { type: 'text/calendar' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `jours_feries_${annee}.ics`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }
+function exporterCalendrier() {
+  const annee = parseInt(document.getElementById("yearSelect").value);
+  if (isNaN(annee)) {
+    alert("Veuillez sélectionner une année valide.");
+    return;
+  }
+  
+  const feries = getFeries(annee);
+  let ics = "BEGIN:VCALENDAR\nVERSION:2.0\nCALSCALE:GREGORIAN\n";
+  
+  feries.forEach(jour => {
+    const date = jour.date.toISOString().split("T")[0].replace(/-/g, "");
+    // DTEND doit être le lendemain pour couvrir la journée complète
+    const dateEnd = new Date(jour.date);
+    dateEnd.setDate(dateEnd.getDate() + 1);
+    const dateFin = dateEnd.toISOString().split("T")[0].replace(/-/g, "");
+    
+    ics += `BEGIN:VEVENT\nSUMMARY:${jour.nom}\nDTSTART;VALUE=DATE:${date}\nDTEND;VALUE=DATE:${dateFin}\nEND:VEVENT\n`;
+  });
+  
+  ics += "END:VCALENDAR";
+  
+  const blob = new Blob([ics], { type: 'text/calendar' });
+  const url = URL.createObjectURL(blob);
+  
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `jours_feries_${annee}.ics`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 
     // Initialisation
     const currentYear = new Date().getFullYear();
