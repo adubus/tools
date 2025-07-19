@@ -74,10 +74,11 @@
           <a class="button" href="${wazeURL}" target="_blank">🚗 Waze</a>
         `;
 
+        <!--
         // Si iOS, proposer copie du lien Geovelo
         if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
           html += `<button onclick="navigator.clipboard.writeText('${geoVeloURL}'); alert('Lien Geovelo copié dans le presse-papier')">📋 Copier lien Geovelo</button>`;
-        }
+        }-->
 
         resultDiv.innerHTML = html;
 
