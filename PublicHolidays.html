@@ -89,7 +89,7 @@ function exporterCalendrier() {
     const dateFin = dateEnd.toISOString().split("T")[0].replace(/-/g, "");
     
     ics += `BEGIN:VEVENT\nSUMMARY:${jour.nom}\nDTSTART;VALUE=DATE:${dateFin}\nDTEND;VALUE=DATE:${dateFin}\nEND:VEVENT\n`;
-  
+  });
   ics += "END:VCALENDAR";
   
   const blob = new Blob([ics], { type: 'text/calendar' });
