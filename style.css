@@ -1,0 +1,81 @@
+/* Base */
+body {
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f5f9fc;
+  color: #212529;
+}
+
+/* Container principal */
+.container {
+  max-width: 800px;
+  margin: auto;
+  padding: 2rem;
+}
+
+/* Titres */
+h1, h2 {
+  color: #0077cc;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+/* Paragraphes */
+p {
+  margin: 0.5rem 0;
+}
+
+/* Inputs */
+input[type="text"],
+input[type="number"],
+input[type="date"] {
+  width: 100%;
+  max-width: 400px;
+  padding: 10px;
+  margin: 0.5rem 0 1rem 0;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-sizing: border-box;
+}
+
+/* Boutons */
+button {
+  background-color: #0077cc;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  margin: 5px;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #005fa3;
+}
+
+/* Résultats ou affichage de données */
+.result,
+.output {
+  background-color: #ffffff;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  padding: 1rem;
+  margin-top: 1rem;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+/* Liens retour */
+.back-link {
+  display: inline-block;
+  margin-top: 1.5rem;
+  text-decoration: none;
+  color: #0077cc;
+  font-weight: bold;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
