@@ -1,9 +1,9 @@
 {
-  "name": "GPS Ville",
-  "short_name": "GPSVille",
+  "name": "Antoine's Tools",
+  "short_name": "AD Tools",
   "start_url": "index.html",
   "display": "standalone",
-  "background_color": "#ffffff",
+  "background_color": "#0077b6",
   "theme_color": "#4CAF50",
   "icons": [
     {
