@@ -22,71 +22,80 @@
   <div id="result" class="result"></div>
 
   <script>
-    async function getCoordinates(city) {
-      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city)}`;
-      const response = await fetch(url);
-      const data = await response.json();
-      if (data.length === 0) throw new Error("Ville non trouvée : " + city);
-      return {
-        lat: data[0].lat,
-        lon: data[0].lon
-      };
-    }
+   async function getWeather() {
+  const city = document.getElementById("city").value.trim();
+  const apiKey = "281eec27318c19122b887f323200a827";
+  const result = document.getElementById("result");
 
-    async function obtenirCoordonnees() {
-      const fromCity = document.getElementById("fromCity").value.trim();
-      const toCity = document.getElementById("toCity").value.trim();
-      const resultDiv = document.getElementById("result");
-      resultDiv.innerHTML = "Chargement...";
+  result.innerHTML = "Chargement...";
 
-      if (!toCity) {
-        resultDiv.innerHTML = "<span style='color:red'>Veuillez saisir une ville d'arrivée.</span>";
+  try {
+    let url = "";
+
+    if (city) {
+      // Si ville saisie, on cherche par nom de ville
+      url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${apiKey}&units=metric&lang=fr`;
+    } else {
+      // Sinon on tente la géolocalisation
+      if (!navigator.geolocation) {
+        result.innerHTML = "<p class='info' style='color:red'>Géolocalisation non supportée par ce navigateur. Veuillez saisir une ville.</p>";
         return;
       }
 
-      try {
-        const toCoords = await getCoordinates(toCity);
-        let fromCoords = null;
+      const position = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000 });
+      });
 
-        if (fromCity) {
-          fromCoords = await getCoordinates(fromCity);
-        } else {
-          // Géolocalisation
-          fromCoords = await new Promise((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(
-              pos => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
-              err => reject("Impossible de récupérer la position actuelle. Vérifiez vos autorisations.")
-            );
-          });
-        }
+      const lat = position.coords.latitude;
+      const lon = position.coords.longitude;
 
-        // Construction des liens
-        const geoVeloURL = `https://geovelo.app/fr/route/?from=${fromCoords.lat},${fromCoords.lon}&to=${toCoords.lat},${toCoords.lon}`;
-        const appleMapsURL = `http://maps.apple.com/?saddr=${fromCoords.lat},${fromCoords.lon}&daddr=${toCoords.lat},${toCoords.lon}`;
-        const googleMapsURL = `https://www.google.com/maps/dir/${fromCoords.lat},${fromCoords.lon}/${toCoords.lat},${toCoords.lon}`;
-        const wazeURL = `https://www.waze.com/fr/live-map/directions?navigate=yes&to=ll.${toCoords.lat}%2C${toCoords.lon}${fromCity ? `&from=${encodeURIComponent(fromCity)}` : ""}`;
-
-        let html = `
-          <p><strong>Coordonnées de départ :</strong> ${fromCoords.lat}, ${fromCoords.lon}</p>
-          <p><strong>Coordonnées d'arrivée :</strong> ${toCoords.lat}, ${toCoords.lon}</p>
-          <a class="button" href="${geoVeloURL}" target="_blank">🧭 Ouvrir dans Geovelo</a>
-          <a class="button" href="${googleMapsURL}" target="_blank">📍 Google Maps</a>
-          <a class="button" href="${appleMapsURL}" target="_blank">🍎 Apple Plans</a>
-          <a class="button" href="${wazeURL}" target="_blank">🚗 Waze</a>
-        `;
-
-        // Si iOS, proposer copie du lien Geovelo
-        /*
-        if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
-          html += `<button onclick="navigator.clipboard.writeText('${geoVeloURL}'); alert('Lien Geovelo copié dans le presse-papier')">📋 Copier lien Geovelo</button>`;
-        }*/
-
-        resultDiv.innerHTML = html;
-
-      } catch (err) {
-        resultDiv.innerHTML = `<span style='color:red'>Erreur : ${err}</span>`;
-      }
+      url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=fr`;
     }
+
+    const response = await fetch(url);
+
+    if (!response.ok) throw new Error("Ville introuvable ou erreur API");
+
+    const data = await response.json();
+
+    // Extraction des infos météo
+    const temperature = data.main.temp;
+    const tempMin = data.main.temp_min;
+    const tempMax = data.main.temp_max;
+    const description = data.weather[0].description;
+    const icon = data.weather[0].icon;
+    const humidity = data.main.humidity;
+    const pressure = data.main.pressure;
+    const windSpeed = data.wind.speed;
+    const windDeg = data.wind.deg;
+    const cloudiness = data.clouds.all;
+    const sunrise = new Date(data.sys.sunrise * 1000).toLocaleTimeString("fr-FR");
+    const sunset = new Date(data.sys.sunset * 1000).toLocaleTimeString("fr-FR");
+
+    const directions = ["Nord", "Nord-Est", "Est", "Sud-Est", "Sud", "Sud-Ouest", "Ouest", "Nord-Ouest"];
+    const windDir = directions[Math.round(windDeg / 45) % 8];
+
+    result.innerHTML = `
+      <h2>${data.name}</h2>
+      <div class="info">
+        <img src="https://openweathermap.org/img/wn/${icon}@2x.png" alt="${description}" class="icon" />
+        <strong>${description}</strong>
+      </div>
+      <div class="info">🌡️ ${temperature} °C</div>
+      <div class="info">🔻 ${tempMin} °C &nbsp;&nbsp; 🔺 ${tempMax} °C</div>
+      <div class="info">💨 ${windSpeed} m/s (${windDir})</div>
+      <div class="info">💧 ${humidity}%</div>
+      <div class="info">🔽 ${pressure} hPa</div>
+      <div class="info">☁️ ${cloudiness}%</div>
+      <div class="info">🌅 ${sunrise}</div>
+      <div class="info">🌇 ${sunset}</div>
+    `;
+
+  } catch (error) {
+    result.innerHTML = `<p class='info' style='color:red'>Erreur : ${error.message}</p>`;
+  }
+}
+
   </script>
 </body>
 </html>
