@@ -1,39 +1,49 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Itinéraire ViaMichelin</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Créer un itinéraire ViaMichelin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-  <h2>Créer un itinéraire avec ViaMichelin</h2>
+<body class="bg-gray-100 text-gray-800 flex items-center justify-center min-h-screen">
+  <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
+    <h2 class="text-2xl font-bold mb-6 text-center">Créer un itinéraire ViaMichelin</h2>
 
-  <form onsubmit="ouvrirLien(event)">
-    <label>Départ :
-      <input type="text" id="depart" required>
-    </label>
-    <br>
-    <label>Arrivée :
-      <input type="text" id="arrivee" required>
-    </label>
-    <br>
-    <label>Mode :
-      <select id="mode">
-        <option value="car">🚗 Voiture</option>
-        <option value="bike">🚲 Vélo</option>
-        <option value="pedestrian">🚶‍♂️ À pied</option>
-      </select>
-    </label>
-    <br><br>
-    <button type="submit">Afficher l’itinéraire</button>
-  </form>
+    <form onsubmit="ouvrirLien(event)" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium">Départ :</label>
+        <input type="text" id="depart" required class="mt-1 w-full p-2 border border-gray-300 rounded-xl" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium">Arrivée :</label>
+        <input type="text" id="arrivee" required class="mt-1 w-full p-2 border border-gray-300 rounded-xl" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium">Mode de transport :</label>
+        <select id="mode" class="mt-1 w-full p-2 border border-gray-300 rounded-xl">
+          <option value="car">🚗 Voiture</option>
+          <option value="bike">🚲 Vélo</option>
+          <option value="pedestrian">🚶‍♂️ À pied</option>
+        </select>
+      </div>
+
+      <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-xl">
+        Afficher l’itinéraire
+      </button>
+    </form>
+  </div>
 
   <script>
     function ouvrirLien(event) {
       event.preventDefault();
-      const depart = encodeURIComponent(document.getElementById('depart').value);
-      const arrivee = encodeURIComponent(document.getElementById('arrivee').value);
+      const depart = encodeURIComponent(document.getElementById('depart').value.trim());
+      const arrivee = encodeURIComponent(document.getElementById('arrivee').value.trim());
       const mode = document.getElementById('mode').value;
+
+      // URL simplifiée — pas officiellement documentée, mais fonctionne dans de nombreux cas
       const url = `https://www.viamichelin.fr/web/Itineraires?departure=${depart}&arrival=${arrivee}&type=${mode}`;
+
       window.open(url, '_blank');
     }
   </script>
