@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -51,7 +50,6 @@
         if (fromCity) {
           fromCoords = await getCoordinates(fromCity);
         } else {
-          // Géolocalisation
           fromCoords = await new Promise((resolve, reject) => {
             navigator.geolocation.getCurrentPosition(
               pos => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
@@ -60,7 +58,6 @@
           });
         }
 
-        // Construction des liens
         const geoVeloURL = `https://geovelo.app/fr/route/?from=${fromCoords.lat},${fromCoords.lon}&to=${toCoords.lat},${toCoords.lon}`;
         const appleMapsURL = `http://maps.apple.com/?saddr=${fromCoords.lat},${fromCoords.lon}&daddr=${toCoords.lat},${toCoords.lon}`;
         const googleMapsURL = `https://www.google.com/maps/dir/${fromCoords.lat},${fromCoords.lon}/${toCoords.lat},${toCoords.lon}`;
@@ -69,17 +66,32 @@
         let html = `
           <p><strong>Coordonnées de départ :</strong> ${fromCoords.lat}, ${fromCoords.lon}</p>
           <p><strong>Coordonnées d'arrivée :</strong> ${toCoords.lat}, ${toCoords.lon}</p>
-          <a class="button" href="${geoVeloURL}" target="_blank">🧭 Ouvrir dans Geovelo</a>
+          <a class="button" href="${geoVeloURL}" target="_blank">🧱 Ouvrir dans Geovelo</a>
           <a class="button" href="${googleMapsURL}" target="_blank">📍 Google Maps</a>
           <a class="button" href="${appleMapsURL}" target="_blank">🍎 Apple Plans</a>
           <a class="button" href="${wazeURL}" target="_blank">🚗 Waze</a>
         `;
 
-        // Si iOS, proposer copie du lien Geovelo
-        /*
-        if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
-          html += `<button onclick="navigator.clipboard.writeText('${geoVeloURL}'); alert('Lien Geovelo copié dans le presse-papier')">📋 Copier lien Geovelo</button>`;
-        }*/
+        const viaMichelinObj = [];
+        viaMichelinObj.push({
+          label: fromCity || "Position actuelle",
+          location: { lat: parseFloat(fromCoords.lat), lon: parseFloat(fromCoords.lon) },
+          isDeparture: true,
+          type: "city",
+          inputType: "free",
+          countryCode: "FRA"
+        });
+        viaMichelinObj.push({
+          label: toCity,
+          location: { lat: parseFloat(toCoords.lat), lon: parseFloat(toCoords.lon) },
+          isArrival: true,
+          type: "city",
+          inputType: "free",
+          countryCode: "FRA"
+        });
+
+        const viaMichelinURL = `https://www.viamichelin.fr/itineraires?itinerary=${encodeURIComponent(JSON.stringify(viaMichelinObj))}`;
+        html += `<a class="button" href="${viaMichelinURL}" target="_blank">🚣️ ViaMichelin</a>`;
 
         resultDiv.innerHTML = html;
 
