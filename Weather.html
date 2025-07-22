@@ -161,39 +161,55 @@ async function getForecast() {
 
     // Construire un résumé par jour
     let html = `<h2>Météo sur 5 jours pour ${data.city.name}</h2>`;
+for (const date in forecastByDay) {
+  const dayItems = forecastByDay[date];
 
-    for (const date in forecastByDay) {
-      const dayItems = forecastByDay[date];
+  const temps = dayItems.map(i => i.main.temp);
+  const tempMin = Math.min(...dayItems.map(i => i.main.temp_min));
+  const tempMax = Math.max(...dayItems.map(i => i.main.temp_max));
 
-      // Calculer min, max, condition la plus fréquente
-      const temps = dayItems.map(i => i.main.temp);
-      const tempMin = Math.min(...dayItems.map(i => i.main.temp_min));
-      const tempMax = Math.max(...dayItems.map(i => i.main.temp_max));
+  // Pression (en hPa)
+  const pressions = dayItems.map(i => i.main.pressure);
 
-      // Choisir la météo la plus fréquente sur la journée
-      const descriptions = {};
-      dayItems.forEach(i => {
-        const desc = i.weather[0].description;
-        descriptions[desc] = (descriptions[desc] || 0) + 1;
-      });
-      const mainDesc = Object.entries(descriptions).sort((a,b) => b[1]-a[1])[0][0];
+  // Prendre la pression au début et à la fin de la journée
+  const pressionDebut = pressions[0];
+  const pressionFin = pressions[pressions.length - 1];
 
-      // Icône : prendre la première du jour
-      const icon = dayItems[0].weather[0].icon;
+  // Calculer une pression moyenne pour affichage (ou pressionFin si tu préfères)
+  const pressionMoy = pressions.reduce((a,b) => a + b, 0) / pressions.length;
 
-      // Formater la date en français
-      const dateObj = new Date(date);
-      const dateFr = dateObj.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+  // Déterminer symbole + / − / stable
+  let symbolePression = "➖";
+  if (pressionFin > pressionDebut) symbolePression = "⬆️";
+  else if (pressionFin < pressionDebut) symbolePression = "⬇️";
 
-      html += `
-        <div style="border: 1px solid #ddd; margin-bottom: 1em; padding: 0.5em; border-radius: 8px;">
-          <h3>${dateFr}</h3>
-          <img src="https://openweathermap.org/img/wn/${icon}@2x.png" alt="${mainDesc}" />
-          <p><strong>${mainDesc}</strong></p>
-          <p>Min: ${tempMin.toFixed(1)} °C &nbsp;&nbsp; Max: ${tempMax.toFixed(1)} °C</p>
-        </div>
-      `;
-    }
+  // Choisir la météo la plus fréquente sur la journée
+  const descriptions = {};
+  dayItems.forEach(i => {
+    const desc = i.weather[0].description;
+    descriptions[desc] = (descriptions[desc] || 0) + 1;
+  });
+  const mainDesc = Object.entries(descriptions).sort((a,b) => b[1]-a[1])[0][0];
+
+  // Icône : prendre la première du jour
+  const icon = dayItems[0].weather[0].icon;
+
+  // Formater la date en français
+  const dateObj = new Date(date);
+  const dateFr = dateObj.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+
+  html += `
+    <div style="border: 1px solid #ddd; margin-bottom: 1em; padding: 0.5em; border-radius: 8px;">
+      <h3>${dateFr}</h3>
+      <img src="https://openweathermap.org/img/wn/${icon}@2x.png" alt="${mainDesc}" />
+      <p><strong>${mainDesc}</strong></p>
+      <p>Min: ${tempMin.toFixed(1)} °C &nbsp;&nbsp; Max: ${tempMax.toFixed(1)} °C</p>
+      <p>Pression : ${pressionMoy.toFixed(0)} hPa ${symbolePression}</p>
+    </div>
+  `;
+}
+
+
 
     result.innerHTML = html;
 
