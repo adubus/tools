@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Créer un itinéraire ViaMichelin</title>
+  <title>Itinéraire ViaMichelin</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 text-gray-800 flex items-center justify-center min-h-screen">
@@ -19,16 +19,8 @@
         <label class="block text-sm font-medium">Arrivée :</label>
         <input type="text" id="arrivee" required class="mt-1 w-full p-2 border border-gray-300 rounded-xl" />
       </div>
-      <div>
-        <label class="block text-sm font-medium">Mode de transport :</label>
-        <select id="mode" class="mt-1 w-full p-2 border border-gray-300 rounded-xl">
-          <option value="car">🚗 Voiture</option>
-          <option value="bike">🚲 Vélo</option>
-          <option value="pedestrian">🚶‍♂️ À pied</option>
-        </select>
-      </div>
 
-      <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-xl">
+      <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-xl">
         Afficher l’itinéraire
       </button>
     </form>
@@ -37,12 +29,21 @@
   <script>
     function ouvrirLien(event) {
       event.preventDefault();
-      const depart = encodeURIComponent(document.getElementById('depart').value.trim());
-      const arrivee = encodeURIComponent(document.getElementById('arrivee').value.trim());
-      const mode = document.getElementById('mode').value;
 
-      // URL simplifiée — pas officiellement documentée, mais fonctionne dans de nombreux cas
-      const url = `https://www.viamichelin.fr/web/Itineraires?departure=${depart}&arrival=${arrivee}&type=${mode}`;
+      const depart = document.getElementById('depart').value.trim();
+      const arrivee = document.getElementById('arrivee').value.trim();
+
+      // Construction du JSON requis par ViaMichelin
+      const itineraire = [
+        { label: depart, isDeparture: true },
+        { label: arrivee, isArrival: true }
+      ];
+
+      // Encodage du JSON pour l'URL
+      const encoded = encodeURIComponent(JSON.stringify(itineraire));
+
+      // Construction de l’URL finale
+      const url = `https://www.viamichelin.fr/itineraires?itinerary=${encoded}`;
 
       window.open(url, '_blank');
     }
