@@ -32,7 +32,10 @@
 
   <div style="text-align: center">
     <input type="text" id="city" placeholder="Entrez une ville" />
-    <button onclick="getWeather()">Afficher</button>
+    <div style="text-align: center; margin-top: 1em;">
+  <button onclick="getWeather()">Météo actuelle</button>
+  <button onclick="getForecast()">Météo 5 jours</button>
+</div>
   </div>
 
   <div id="result"></div>
@@ -111,7 +114,93 @@
     result.innerHTML = `<p class='info' style='color:red'>Erreur : ${error.message}</p>`;
   }
 }
+async function getForecast() {
+  const city = document.getElementById("city").value.trim();
+  const apiKey = "281eec27318c19122b887f323200a827";
+  const result = document.getElementById("result");
 
+  result.innerHTML = "Chargement de la météo sur 5 jours...";
+
+  try {
+    let url = "";
+
+    if (city) {
+      url = `https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(city)}&appid=${apiKey}&units=metric&lang=fr`;
+    } else {
+      if (!navigator.geolocation) {
+        result.innerHTML = "<p class='info' style='color:red'>Géolocalisation non supportée. Veuillez saisir une ville.</p>";
+        return;
+      }
+
+      const position = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000 });
+      });
+
+      const lat = position.coords.latitude;
+      const lon = position.coords.longitude;
+
+      url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=fr`;
+    }
+
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("Ville introuvable ou erreur API");
+
+    const data = await response.json();
+
+    // data.list contient des prévisions toutes les 3h (40 entrées sur 5 jours)
+    // Pour simplifier, on va regrouper par jour (yyyy-mm-dd)
+    const forecastByDay = {};
+
+    data.list.forEach(item => {
+      const date = item.dt_txt.split(" ")[0];
+      if (!forecastByDay[date]) {
+        forecastByDay[date] = [];
+      }
+      forecastByDay[date].push(item);
+    });
+
+    // Construire un résumé par jour
+    let html = `<h2>Météo sur 5 jours pour ${data.city.name}</h2>`;
+
+    for (const date in forecastByDay) {
+      const dayItems = forecastByDay[date];
+
+      // Calculer min, max, condition la plus fréquente
+      const temps = dayItems.map(i => i.main.temp);
+      const tempMin = Math.min(...dayItems.map(i => i.main.temp_min));
+      const tempMax = Math.max(...dayItems.map(i => i.main.temp_max));
+
+      // Choisir la météo la plus fréquente sur la journée
+      const descriptions = {};
+      dayItems.forEach(i => {
+        const desc = i.weather[0].description;
+        descriptions[desc] = (descriptions[desc] || 0) + 1;
+      });
+      const mainDesc = Object.entries(descriptions).sort((a,b) => b[1]-a[1])[0][0];
+
+      // Icône : prendre la première du jour
+      const icon = dayItems[0].weather[0].icon;
+
+      // Formater la date en français
+      const dateObj = new Date(date);
+      const dateFr = dateObj.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+
+      html += `
+        <div style="border: 1px solid #ddd; margin-bottom: 1em; padding: 0.5em; border-radius: 8px;">
+          <h3>${dateFr}</h3>
+          <img src="https://openweathermap.org/img/wn/${icon}@2x.png" alt="${mainDesc}" />
+          <p><strong>${mainDesc}</strong></p>
+          <p>Min: ${tempMin.toFixed(1)} °C &nbsp;&nbsp; Max: ${tempMax.toFixed(1)} °C</p>
+        </div>
+      `;
+    }
+
+    result.innerHTML = html;
+
+  } catch (error) {
+    result.innerHTML = `<p class='info' style='color:red'>Erreur : ${error.message}</p>`;
+  }
+}
   </script>
 </body>
 </html>
