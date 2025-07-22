@@ -72,26 +72,7 @@
           <a class="button" href="${wazeURL}" target="_blank">🚗 Waze</a>
         `;
 
-        const viaMichelinObj = [];
-        viaMichelinObj.push({
-          label: fromCity || "Position actuelle",
-          location: { lat: parseFloat(fromCoords.lat), lon: parseFloat(fromCoords.lon) },
-          isDeparture: true,
-          type: "city",
-          inputType: "free",
-          countryCode: "FRA"
-        });
-        viaMichelinObj.push({
-          label: toCity,
-          location: { lat: parseFloat(toCoords.lat), lon: parseFloat(toCoords.lon) },
-          isArrival: true,
-          type: "city",
-          inputType: "free",
-          countryCode: "FRA"
-        });
-
-        const viaMichelinURL = `https://www.viamichelin.fr/itineraires?itinerary=${encodeURIComponent(JSON.stringify(viaMichelinObj))}`;
-        html += `<a class="button" href="${viaMichelinURL}" target="_blank">🚣️ ViaMichelin</a>`;
+        html += `<a class="button" href="https://www.viamichelin.fr/itineraires" target="_blank">🚣️ ViaMichelin</a>`;
 
         resultDiv.innerHTML = html;
 
