@@ -73,8 +73,8 @@
         const wazeURL = `https://www.waze.com/fr/live-map/directions?navigate=yes&to=ll.${toCoords.lat}%2C${toCoords.lon}${fromCity ? `&from=${encodeURIComponent(fromCity)}` : ""}`;
 
         let html = `
-          //<p><strong>Coordonnées de départ :</strong> ${fromCoords.lat}, ${fromCoords.lon}</p>
-          //<p><strong>Coordonnées d'arrivée :</strong> ${toCoords.lat}, ${toCoords.lon}</p>
+          <p>départ  : ${fromCoords.lat}, ${fromCoords.lon}</p>
+          <p>arrivée : ${toCoords.lat}, ${toCoords.lon}</p>
           <a class="button" href="${geoVeloURL}" target="_blank">🧭 Ouvrir dans Geovelo</a>
           <a class="button" href="${googleMapsURL}" target="_blank">📍 Google Maps</a>
           <a class="button" href="${appleMapsURL}" target="_blank">🍎 Apple Plans</a>
