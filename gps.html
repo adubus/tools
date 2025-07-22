@@ -60,8 +60,14 @@
           });
         }
 
-        // Construction des liens
-        const geoVeloURL = `https://geovelo.app/fr/route/?from=${fromCoords.lat},${fromCoords.lon}&to=${toCoords.lat},${toCoords.lon}`;
+      // Construction des liens
+      const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+      
+      const geoVeloURL = isIOS
+        ? `https://geovelo.app/fr/route/?from=${fromCoords.lat},${fromCoords.lon}&to=${toCoords.lat},${toCoords.lon}`
+        : `https://geovelo.app/fr/route/?from=${fromCoords.lon},${fromCoords.lat}&to=${toCoords.lon},${toCoords.lat}`;
+        
+        //const geoVeloURL = `https://geovelo.app/fr/route/?from=${fromCoords.lat},${fromCoords.lon}&to=${toCoords.lat},${toCoords.lon}`;
         const appleMapsURL = `http://maps.apple.com/?saddr=${fromCoords.lat},${fromCoords.lon}&daddr=${toCoords.lat},${toCoords.lon}`;
         const googleMapsURL = `https://www.google.com/maps/dir/${fromCoords.lat},${fromCoords.lon}/${toCoords.lat},${toCoords.lon}`;
         const wazeURL = `https://www.waze.com/fr/live-map/directions?navigate=yes&to=ll.${toCoords.lat}%2C${toCoords.lon}${fromCity ? `&from=${encodeURIComponent(fromCity)}` : ""}`;
