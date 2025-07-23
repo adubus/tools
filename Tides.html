@@ -1,3 +1,21 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Horaires des Marées</title>
+  <link rel="stylesheet" href="style.css" />  
+</head>
+<body>
+  <button onclick="window.location.href='index.html'">Retour à la page d'accueil</button>
+  <h1>Horaires des Marées</h1>
+
+  <label for="ville">Ville côtière :</label>
+  <input type="text" id="ville" placeholder="ex : Saint-Malo" />
+  <button onclick="obtenirMarees()">Obtenir les marées</button>
+
+  <div id="result"></div>
+
 <script>
   const API_KEY = "7499ed9f-fbe6-4297-9220-9fd879366b4a";
 
