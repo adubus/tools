@@ -9,46 +9,47 @@
     input, button { margin-top: 10px; padding: 5px; font-size: 16px; }
     ul { list-style: none; padding: 0; }
     li { margin-bottom: 10px; }
+    #map { height: 500px; margin-top: 20px; }
   </style>
-    <link rel="stylesheet" href="style.css" />  
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
   <button onclick="window.location.href='index.html'">Retour à la page d'accueil</button>
   <h1>À faire autour de moi</h1>
 
   <label for="ville">Ville (ou laisser vide pour géolocalisation) :</label><br />
-  <input type="text" id="ville" placeholder="ex : Nantes" />
-  <button onclick="rechercherLieux()">Rechercher</button>
+  <input type="text" id="ville" placeholder="ex : Nantes" /><br />
+  <button onclick="rechercherLieux('liste')">Afficher en liste</button>
+  <button onclick="rechercherLieux('carte')">Afficher sur une carte</button>
 
   <div id="resultat"></div>
+  <div id="map" style="display:none;"></div>
 
   <script>
-    const GEONAMES_USERNAME = "dubus"; // 🔁 Remplace "demo" par ton compte GeoNames
+    const GEONAMES_USERNAME = "dubus";
 
-    async function rechercherLieux() {
+    async function rechercherLieux(mode) {
       const ville = document.getElementById("ville").value.trim();
       const result = document.getElementById("resultat");
+      const mapDiv = document.getElementById("map");
       result.innerHTML = "Chargement…";
-
+      mapDiv.style.display = "none";
       let lat, lon;
 
       try {
         if (ville) {
-          // Chercher coordonnées de la ville avec Nominatim
-          const geo = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(ville)}`)
-            .then(r => r.json());
+          const geo = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(ville)}`).then(r => r.json());
           if (!geo.length) throw new Error("Ville introuvable");
           lat = geo[0].lat;
           lon = geo[0].lon;
         } else {
-          // Géolocalisation automatique
           const position = await new Promise((resolve, reject) =>
             navigator.geolocation.getCurrentPosition(resolve, reject));
           lat = position.coords.latitude;
           lon = position.coords.longitude;
         }
 
-        // Chercher lieux via GeoNames WikipediaSearch
         const url = `https://secure.geonames.org/findNearbyWikipediaJSON?lat=${lat}&lng=${lon}&radius=10&maxRows=15&lang=fr&username=${GEONAMES_USERNAME}`;
         const data = await fetch(url).then(r => r.json());
 
@@ -57,15 +58,31 @@
           return;
         }
 
-        // Affichage
-        result.innerHTML = `<h2>Lieux autour de ${ville || "votre position"} :</h2><ul>` +
-          data.geonames.map(lieu => `
-            <li>
-              <strong>${lieu.title}</strong><br />
-              <em>${lieu.summary}</em><br />
-              <a href="https://${lieu.wikipediaUrl}" target="_blank">Voir sur Wikipedia</a>
-            </li>
-          `).join('') + "</ul>";
+        if (mode === "liste") {
+          result.innerHTML = `<h2>Lieux autour de ${ville || "votre position"} :</h2><ul>` +
+            data.geonames.map(lieu => `
+              <li>
+                <strong>${lieu.title}</strong><br />
+                <em>${lieu.summary}</em><br />
+                <a href="https://${lieu.wikipediaUrl}" target="_blank">Voir sur Wikipedia</a>
+              </li>
+            `).join('') + "</ul>";
+        } else if (mode === "carte") {
+          result.innerHTML = "";
+          mapDiv.style.display = "block";
+          mapDiv.innerHTML = ""; // reset carte
+
+          const map = L.map('map').setView([lat, lon], 13);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap',
+          }).addTo(map);
+
+          data.geonames.forEach(lieu => {
+            const marker = L.marker([lieu.lat, lieu.lng]).addTo(map);
+            marker.bindPopup(`<strong>${lieu.title}</strong><br /><a href="https://${lieu.wikipediaUrl}" target="_blank">Voir sur Wikipedia</a>`);
+          });
+        }
+
       } catch (err) {
         console.error(err);
         result.innerHTML = `<span style="color:red">Erreur : ${err.message}</span>`;
