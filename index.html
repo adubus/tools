@@ -21,11 +21,11 @@
 
   
   
-  <script>
+<script>
   // Bloque clic droit
   document.addEventListener('contextmenu', event => event.preventDefault());
 
-  // Bloque certaines touches (F12, Ctrl+U, Ctrl+S, Ctrl+Shift+I, etc.)
+  // Bloque certaines touches classiques
   document.addEventListener('keydown', function(e) {
     if (
       e.key === 'F12' ||
@@ -37,21 +37,33 @@
     }
   });
 
-  // Efface le code source si l'utilisateur tente d'inspecter rapidement
-  setInterval(() => {
-    if (window.outerHeight - window.innerHeight > 100 || window.outerWidth - window.innerWidth > 100) {
-      document.body.innerHTML = '';
-    }
-  }, 1000);
-
-  // Optionnel : message pour décourager
+  // Message dissuasif sur Ctrl+U
   window.addEventListener('keydown', function(e) {
     if (e.ctrlKey && e.key === 'u') {
       alert("Copier ce code est désactivé.");
       e.preventDefault();
     }
   });
+
+  // Détection plus subtile des DevTools (avec console.log piégé)
+  let devtoolsOpen = false;
+  const element = new Image();
+  Object.defineProperty(element, 'id', {
+    get: function () {
+      devtoolsOpen = true;
+      throw new Error("DevTools détecté !");
+    }
+  });
+
+  setInterval(() => {
+    devtoolsOpen = false;
+    console.log(element);
+    if (devtoolsOpen) {
+      document.body.innerHTML = "<h1 style='text-align:center;'>Inspection interdite</h1>";
+    }
+  }, 2000);
 </script>
+
 
 
   
