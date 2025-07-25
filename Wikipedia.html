@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>À faire autour de moi</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    input, button { margin-top: 10px; padding: 5px; font-size: 16px; }
+    ul { list-style: none; padding: 0; }
+    li { margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+  <button onclick="window.location.href='index.html'">Retour à la page d'accueil</button>
+  <h1>À faire autour de moi</h1>
+
+  <label for="ville">Ville (ou laisser vide pour géolocalisation) :</label><br />
+  <input type="text" id="ville" placeholder="ex : Nantes" />
+  <button onclick="rechercherLieux()">Rechercher</button>
+
+  <div id="resultat"></div>
+
+  <script>
+    const GEONAMES_USERNAME = "dubus"; // 🔁 Remplace "demo" par ton compte GeoNames
+
+    async function rechercherLieux() {
+      const ville = document.getElementById("ville").value.trim();
+      const result = document.getElementById("resultat");
+      result.innerHTML = "Chargement…";
+
+      let lat, lon;
+
+      try {
+        if (ville) {
+          // Chercher coordonnées de la ville avec Nominatim
+          const geo = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(ville)}`)
+            .then(r => r.json());
+          if (!geo.length) throw new Error("Ville introuvable");
+          lat = geo[0].lat;
+          lon = geo[0].lon;
+        } else {
+          // Géolocalisation automatique
+          const position = await new Promise((resolve, reject) =>
+            navigator.geolocation.getCurrentPosition(resolve, reject));
+          lat = position.coords.latitude;
+          lon = position.coords.longitude;
+        }
+
+        // Chercher lieux via GeoNames WikipediaSearch
+        const url = `https://secure.geonames.org/findNearbyWikipediaJSON?lat=${lat}&lng=${lon}&radius=10&maxRows=15&lang=fr&username=${GEONAMES_USERNAME}`;
+        const data = await fetch(url).then(r => r.json());
+
+        if (!data.geonames || data.geonames.length === 0) {
+          result.innerHTML = "Aucun lieu trouvé.";
+          return;
+        }
+
+        // Affichage
+        result.innerHTML = `<h2>Lieux autour de ${ville || "votre position"} :</h2><ul>` +
+          data.geonames.map(lieu => `
+            <li>
+              <strong>${lieu.title}</strong><br />
+              <em>${lieu.summary}</em><br />
+              <a href="https://${lieu.wikipediaUrl}" target="_blank">Voir sur Wikipedia</a>
+            </li>
+          `).join('') + "</ul>";
+      } catch (err) {
+        console.error(err);
+        result.innerHTML = `<span style="color:red">Erreur : ${err.message}</span>`;
+      }
+    }
+  </script>
+</body>
+</html>
