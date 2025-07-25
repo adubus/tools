@@ -49,9 +49,12 @@
         }
 
         // Appel API OpenTripMap pour récupérer les lieux
-        const radius = 3000; // rayon en mètres
-        const lieux = await fetch(`https://api.opentripmap.com/0.1/fr/places/radius?radius=${radius}&lon=${lon}&lat=${lat}&rate=2&format=json&apikey=${opentripmapKey}`)
-          .then(r => r.json());
+        const radius = 5000;  // 5 km au lieu de 3 km
+        const rate = 1;       // taux moins restrictif (1 ou 0 pour inclure plus)
+        const lieux = await fetch(
+          `https://api.opentripmap.com/0.1/fr/places/radius?radius=${radius}`
+          + `&lon=${lon}&lat=${lat}&rate=${rate}&format=json&apikey=${opentripmapKey}`
+        ).then(r => r.json());
 
         if (!lieux.length) {
           resultat.innerHTML = "Aucun lieu trouvé.";
