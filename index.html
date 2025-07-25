@@ -9,11 +9,48 @@
 </head>
 <body>
   <h1>Outils disponibles</h1>
+    <button onclick="window.location.href='PublicHolidays.html'">Public Holidays</button>
   <button onclick="window.location.href='gps.html'">Route Gen</button>
   <button onclick="window.location.href='Tides.html'">Tide Tools</button>
-  <button onclick="window.location.href='PublicHolidays.html'">Public Holidays</button>
     <button onclick="window.location.href='Weather.html'">Weather</button>
 
       <button onclick="window.location.href='Wikipedia.html'">Wikipedia</button>
+
+  
+  
+  <script>
+  // Bloque clic droit
+  document.addEventListener('contextmenu', event => event.preventDefault());
+
+  // Bloque certaines touches (F12, Ctrl+U, Ctrl+S, Ctrl+Shift+I, etc.)
+  document.addEventListener('keydown', function(e) {
+    if (
+      e.key === 'F12' ||
+      (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J')) ||
+      (e.ctrlKey && (e.key === 'U' || e.key === 'S'))
+    ) {
+      e.preventDefault();
+      return false;
+    }
+  });
+
+  // Efface le code source si l'utilisateur tente d'inspecter rapidement
+  setInterval(() => {
+    if (window.outerHeight - window.innerHeight > 100 || window.outerWidth - window.innerWidth > 100) {
+      document.body.innerHTML = '';
+    }
+  }, 1000);
+
+  // Optionnel : message pour décourager
+  window.addEventListener('keydown', function(e) {
+    if (e.ctrlKey && e.key === 'u') {
+      alert("Copier ce code est désactivé.");
+      e.preventDefault();
+    }
+  });
+</script>
+
+
+  
 </body>
 </html>
