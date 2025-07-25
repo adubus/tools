@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Événements locaux</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    input, button { margin-top: 10px; padding: 5px; font-size: 16px; }
+    ul { list-style: none; padding: 0; }
+    li { margin-bottom: 15px; }
+  </style>
+</head>
+<body>
+  <button onclick="window.location.href='index.html'">Retour à la page d'accueil</button>
+  <h1>Événements locaux</h1>
+
+  <label for="ville">Ville (laisser vide pour géolocalisation) :</label><br />
+  <input type="text" id="ville" placeholder="ex : Paris" />
+  <button onclick="rechercherEvents()">Rechercher</button>
+
+  <div id="result"></div>
+
+  <script>
+    const TICKETMASTER_API_KEY = "TON_API_KEY"; // Inscris ta clé ici
+
+    async function rechercherEvents() {
+      const ville = document.getElementById("ville").value.trim();
+      const result = document.getElementById("result");
+      result.innerHTML = "Chargement…";
+
+      let lat, lon;
+
+      try {
+        if (ville) {
+          const geo = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(ville)}`)
+            .then(r => r.json());
+          if (!geo.length) throw new Error("Ville introuvable");
+          lat = geo[0].lat;
+          lon = geo[0].lon;
+        } else {
+          const position = await new Promise((resolve, reject) =>
+            navigator.geolocation.getCurrentPosition(resolve, reject));
+          lat = position.coords.latitude;
+          lon = position.coords.longitude;
+        }
+
+        // Requête Ticketmaster API v2
+        // Documentation : https://developer.ticketmaster.com/products-and-docs/apis/discovery-api/v2/
+        const url = `https://app.ticketmaster.com/discovery/v2/events.json?apikey=${TICKETMASTER_API_KEY}&latlong=${lat},${lon}&radius=10&unit=km&locale=fr-fr`;
+
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("Erreur API Ticketmaster");
+        const data = await response.json();
+
+        if (!data._embedded || !data._embedded.events || data._embedded.events.length === 0) {
+          result.innerHTML = "Aucun événement trouvé.";
+          return;
+        }
+
+        result.innerHTML = "<h2>Événements autour de " + (ville || "votre position") + " :</h2><ul>" +
+          data._embedded.events.map(event => {
+            const date = event.dates?.start?.localDate || "";
+            const heure = event.dates?.start?.localTime || "";
+            const url = event.url || "#";
+            const nom = event.name || "Nom non disponible";
+            const lieu = event._embedded?.venues?.[0]?.name || "Lieu non disponible";
+            return `<li><strong>${nom}</strong><br>${date} ${heure}<br>${lieu}<br><a href="${url}" target="_blank">Plus d'infos</a></li>`;
+          }).join("") + "</ul>";
+
+      } catch (err) {
+        console.error(err);
+        result.innerHTML = `<span style="color:red">Erreur : ${err.message}</span>`;
+      }
+    }
+  </script>
+</body>
+</html>
