@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Restaurants, Cafés, Boulangeries</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    body { font-family: sans-serif; padding: 10px; }
+    #map { height: 60vh; margin-top: 10px; border: 1px solid #ccc; border-radius: 8px; }
+    select, button { padding: 5px; margin-top: 10px; font-size: 16px; }
+  </style>
+    <link rel="stylesheet" href="style.css" />  
+</head>
+<body>
+  <button onclick="window.location.href='index.html'">Retour à l'accueil</button>
+  <h1>☕ Restaurants, Cafés, Boulangeries autour de moi</h1>
+
+  <label for="type">Type de lieu :</label>
+  <select id="type">
+    <option value="restaurant">Restaurant</option>
+    <option value="cafe">Café</option>
+    <option value="bakery">Boulangerie</option>
+  </select>
+  <button onclick="rechercherLieux()">Rechercher</button>
+
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    let map;
+
+    function initMap(lat, lon) {
+      if (!map) {
+        map = L.map('map').setView([lat, lon], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; OpenStreetMap'
+        }).addTo(map);
+      } else {
+        map.setView([lat, lon], 15);
+      }
+    }
+
+    async function rechercherLieux() {
+      const type = document.getElementById("type").value;
+      try {
+        const position = await new Promise((resolve, reject) =>
+          navigator.geolocation.getCurrentPosition(resolve, reject)
+        );
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+
+        initMap(lat, lon);
+
+        const overpassUrl = "https://overpass-api.de/api/interpreter";
+        const query = `
+[out:json];
+node["amenity"="${type}"](around:1000,${lat},${lon});
+out body;
+`;
+
+        const res = await fetch(overpassUrl, {
+          method: "POST",
+          body: query
+        });
+        const data = await res.json();
+
+        L.layerGroup().addTo(map); // nettoyer ancienne couche
+        data.elements.forEach(el => {
+          if (el.lat && el.lon) {
+            const name = el.tags.name || "(sans nom)";
+            const marker = L.marker([el.lat, el.lon]).addTo(map);
+            marker.bindPopup(`<strong>${name}</strong><br/>Type : ${type}`);
+          }
+        });
+      } catch (err) {
+        alert("Erreur : " + err.message);
+      }
+    }
+  </script>
+</body>
+</html>
