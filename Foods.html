@@ -57,47 +57,101 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
     async function rechercherLieux(mode) {
-      const ville = document.getElementById("ville").value.trim();
-      const cat = document.getElementById("categorie").value;
-      const resultat = document.getElementById("resultat");
-      const mapDiv = document.getElementById("map");
-      resultat.innerHTML = "Chargement…";
+  const villeInput = document.getElementById("ville").value.trim();
+  const cat = document.getElementById("categorie").value;
+  const resultat = document.getElementById("resultat");
+  const mapDiv = document.getElementById("map");
+  resultat.innerHTML = "Chargement…";
+  mapDiv.style.display = "none";
+
+  let lat, lon, villeLabel = villeInput;
+
+  try {
+    if (villeInput) {
+      const geo = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(villeInput)}`).then(r => r.json());
+      if (!geo.length) throw new Error("Ville introuvable");
+      lat = geo[0].lat;
+      lon = geo[0].lon;
+    } else {
+      const position = await new Promise((resolve, reject) =>
+        navigator.geolocation.getCurrentPosition(resolve, reject));
+      lat = position.coords.latitude;
+      lon = position.coords.longitude;
+
+      // 🎯 Reverse geocoding pour avoir un nom de ville
+      const reverse = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`).then(r => r.json());
+      villeLabel = reverse.address.city || reverse.address.town || reverse.address.village || "votre position";
+    }
+
+    // Requête Overpass API
+    const radius = 3000;
+    const query = `
+      [out:json];
+      (
+        node["amenity"="${cat}"](around:${radius},${lat},${lon});
+        way["amenity"="${cat}"](around:${radius},${lat},${lon});
+        relation["amenity"="${cat}"](around:${radius},${lat},${lon});
+      );
+      out center;`;
+
+    const overpassURL = "https://overpass-api.de/api/interpreter?data=" + encodeURIComponent(query);
+    const data = await fetch(overpassURL).then(r => r.json());
+
+    if (!data.elements.length) {
+      resultat.innerHTML = "Aucun lieu trouvé.";
+      return;
+    }
+
+    if (mode === "liste") {
       mapDiv.style.display = "none";
+      resultat.innerHTML = `<h2>📍 Résultats autour de ${villeLabel} :</h2><ul>` +
+        data.elements.map(el => {
+          const name = el.tags.name || "Sans nom";
+          const street = el.tags["addr:street"] || "";
+          const number = el.tags["addr:housenumber"] || "";
+          const phone = el.tags["phone"];
+          const phoneHTML = phone ? `Téléphone : <a href="tel:${phone}">${phone}</a><br/>` : "";
+          const latCoord = el.lat?.toFixed(5) || el.center?.lat.toFixed(5);
+          const lonCoord = el.lon?.toFixed(5) || el.center?.lon.toFixed(5);
+          const itineraireURL = `gps.html?toLat=${latCoord}&toLon=${lonCoord}`;
 
-      let lat, lon;
+          return `
+            <li>
+              <strong>${name}</strong><br/>
+              Type : ${cat}<br/>
+              Adresse : ${street} ${number}<br/>
+              ${phoneHTML}
+              <a href="${itineraireURL}" class="button">🧭 Itinéraire</a>
+            </li>
+          `;
+        }).join("") + "</ul>";
+    } else {
+      resultat.innerHTML = "";
+      mapDiv.style.display = "block";
+      mapDiv.innerHTML = "";
 
-      try {
-        if (ville) {
-          const geo = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(ville)}`)
-            .then(r => r.json());
-          if (!geo.length) throw new Error("Ville introuvable");
-          lat = geo[0].lat;
-          lon = geo[0].lon;
-        } else {
-          const position = await new Promise((resolve, reject) =>
-            navigator.geolocation.getCurrentPosition(resolve, reject));
-          lat = position.coords.latitude;
-          lon = position.coords.longitude;
+      const map = L.map("map").setView([lat, lon], 15);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: '&copy; OpenStreetMap'
+      }).addTo(map);
+
+      data.elements.forEach(el => {
+        const name = el.tags.name || "Sans nom";
+        const latitude = el.lat || el.center?.lat;
+        const longitude = el.lon || el.center?.lon;
+        if (latitude && longitude) {
+          L.marker([latitude, longitude])
+            .addTo(map)
+            .bindPopup(`<strong>${name}</strong><br/>Type : ${cat}`);
         }
+      });
+    }
+  } catch (e) {
+    resultat.innerHTML = `<span style="color:red">Erreur : ${e.message}</span>`;
+    console.error(e);
+  }
+}
 
-        // Requête Overpass API
-        const radius = 3000; // en mètres
-        const query = `
-          [out:json];
-          (
-            node["amenity"="${cat}"](around:${radius},${lat},${lon});
-            way["amenity"="${cat}"](around:${radius},${lat},${lon});
-            relation["amenity"="${cat}"](around:${radius},${lat},${lon});
-          );
-          out center;`;
-
-        const overpassURL = "https://overpass-api.de/api/interpreter?data=" + encodeURIComponent(query);
-        const data = await fetch(overpassURL).then(r => r.json());
-
-        if (!data.elements.length) {
-          resultat.innerHTML = "Aucun lieu trouvé.";
-          return;
-        }
 
         if (mode === "liste") {
           mapDiv.style.display = "none";
