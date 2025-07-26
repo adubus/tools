@@ -46,7 +46,19 @@
       const iconClass = `wi wi-owm-${iconCode}`;
       return `<i class="${iconClass} icon"></i>`;
     }
-
+    
+    function windSpeedToBeaufort(windSpeedMps) {
+      const scale = [
+        0.2, 1.5, 3.3, 5.4, 7.9, 10.7, 13.8,
+        17.1, 20.7, 24.4, 28.4, 32.6, Infinity
+      ];
+      for (let i = 0; i < scale.length; i++) {
+        if (windSpeedMps <= scale[i]) {
+          return i;
+        }
+      }
+      return 12;
+    }
     async function getWeather() {
       const city = document.getElementById("city").value.trim();
       const apiKey = "281eec27318c19122b887f323200a827";
@@ -86,14 +98,18 @@
         const humidity = data.main.humidity;
         const pressure = data.main.pressure;
         const windSpeed = data.wind.speed;
+        const beaufort = windSpeedToBeaufort(windSpeed);
         const windDeg = data.wind.deg;
         const cloudiness = data.clouds.all;
         const sunrise = new Date(data.sys.sunrise * 1000).toLocaleTimeString("fr-FR");
         const sunset = new Date(data.sys.sunset * 1000).toLocaleTimeString("fr-FR");
-
+const windInfoHTML = `
+  <i class="wi wi-wind-beaufort-${beaufort}" style="font-size: 2em; color: #007BFF;"></i>
+  <span>${windSpeed.toFixed(1)} m/s (Beaufort ${beaufort})</span>
+`;
         const directions = ["Nord", "Nord-Est", "Est", "Sud-Est", "Sud", "Sud-Ouest", "Ouest", "Nord-Ouest"];
         const windDir = directions[Math.round(windDeg / 45) % 8];
-
+document.getElementById("wind-info").innerHTML = windInfoHTML;
         result.innerHTML = `
           <h2>${data.name}</h2>
           <div class="info">
@@ -103,6 +119,7 @@
           <div class="info">🌡️ ${temperature} °C</div>
           <div class="info">🔻 ${tempMin} °C &nbsp;&nbsp; 🔺 ${tempMax} °C</div>
           <div class="info">💨 ${windSpeed} m/s (${windDir})</div>
+          <div id="wind-info" style="display: flex; align-items: center; gap: 8px; font-size: 1.2em;"></div>
           <div class="info">💧 ${humidity}%</div>
           <div class="info">🔽 ${pressure} hPa</div>
           <div class="info">☁️ ${cloudiness}%</div>
