@@ -1,102 +1,82 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
   <title>Balades autour de moi</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
-    body { font-family: sans-serif; margin: 0; padding: 1rem; }
+    body { font-family: sans-serif; padding: 20px; }
     input, button { margin-top: 10px; padding: 5px; font-size: 16px; }
-    #map { height: 80vh; margin-top: 1rem; }
+    ul { list-style: none; padding: 0; }
+    li { margin-bottom: 15px; }
   </style>
     <link rel="stylesheet" href="style.css" />  
 </head>
 <body>
-  <button onclick="window.location.href='index.html'">Retour à l'accueil</button>
-  <h1>🗺️ Balades autour de moi</h1>
+  <button onclick="window.location.href='index.html'">Retour à la page d'accueil</button>
+  <h1>Balades / Circuits autour de moi</h1>
 
   <label for="ville">Ville (ou laisser vide pour géolocalisation) :</label><br />
   <input type="text" id="ville" placeholder="ex : Annecy" />
   <button onclick="rechercherBalades()">Rechercher</button>
 
-  <div id="map">Carte en attente…</div>
+  <div id="resultat">Résultats en attente…</div>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-  let carte;
-  let marqueurs = [];
+  <script>
+    async function rechercherBalades() {
+      const ville = document.getElementById("ville").value.trim();
+      const resultat = document.getElementById("resultat");
+      resultat.innerHTML = "Chargement…";
 
-  async function rechercherBalades() {
-    const ville = document.getElementById("ville").value.trim();
-    document.getElementById("map").innerHTML = "Chargement...";
+      let lat, lon;
 
-    let lat, lon;
-
-    try {
-      if (ville) {
-        const geo = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(ville)}`).then(r => r.json());
-        if (!geo.length) throw new Error("Ville introuvable.");
-        lat = parseFloat(geo[0].lat);
-        lon = parseFloat(geo[0].lon);
-      } else {
-        const position = await new Promise((resolve, reject) =>
-          navigator.geolocation.getCurrentPosition(resolve, () => reject(new Error("Géolocalisation refusée.")))
-        );
-        lat = position.coords.latitude;
-        lon = position.coords.longitude;
-      }
-
-      const query = `
-        [out:json];
-        (
-          relation["route"~"foot|hiking"](around:10000,${lat},${lon});
-        );
-        out tags center;
-      `;
-
-      const data = await fetch("https://overpass-api.de/api/interpreter", {
-        method: "POST",
-        body: query,
-      }).then(r => r.json());
-
-      if (!data.elements.length) {
-        document.getElementById("map").innerHTML = "🚫 Aucune balade trouvée.";
-        return;
-      }
-
-      // Initialiser ou réinitialiser la carte
-      if (!carte) {
-        carte = L.map('map').setView([lat, lon], 12);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '&copy; OpenStreetMap'
-        }).addTo(carte);
-      } else {
-        carte.setView([lat, lon], 12);
-        marqueurs.forEach(m => carte.removeLayer(m));
-        marqueurs = [];
-      }
-
-      data.elements.forEach(el => {
-        const name = el.tags.name || "Balade";
-        const desc = el.tags.description || "";
-        const url = el.tags.website || `https://www.openstreetmap.org/relation/${el.id}`;
-        const popup = `<strong>${name}</strong><br>${desc}<br><a href="${url}" target="_blank">Voir sur la carte</a>`;
-
-        const latC = el.center?.lat;
-        const lonC = el.center?.lon;
-        if (latC && lonC) {
-          const marker = L.marker([latC, lonC]).addTo(carte).bindPopup(popup);
-          marqueurs.push(marker);
+      try {
+        if (ville) {
+          const geo = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(ville)}`).then(r => r.json());
+          if (!geo.length) throw new Error("Ville introuvable");
+          lat = geo[0].lat;
+          lon = geo[0].lon;
+        } else {
+          const position = await new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject));
+          lat = position.coords.latitude;
+          lon = position.coords.longitude;
         }
-      });
 
-    } catch (e) {
-      console.error(e);
-      document.getElementById("map").innerHTML = `❌ Erreur : ${e.message}`;
+        // Construire la requête Overpass
+        const overpassQuery = `
+          [out:json];
+          (
+            relation["route"~"foot|hiking"](around:10000,${lat},${lon});
+          );
+          out tags center;
+        `;
+        const url = "https://overpass-api.de/api/interpreter";
+        const data = await fetch(url, {
+          method: "POST",
+          body: overpassQuery,
+        }).then(r => r.json());
+
+        if (!data.elements.length) {
+          resultat.innerHTML = "Aucune balade trouvée.";
+          return;
+        }
+
+        // Affichage des balades
+        resultat.innerHTML = `<h2>Balades autour de ${ville || "votre position"} :</h2><ul>` +
+          data.elements.map(el => `
+            <li>
+              <strong>${el.tags.name || "Balade sans nom"}</strong><br />
+              ${el.tags.description || ""}
+              ${el.tags.website ? `<br /><a href="${el.tags.website}" target="_blank">Voir le site</a>` : ""}
+              <br /><a href="https://www.openstreetmap.org/relation/${el.id}" target="_blank">Voir sur OpenStreetMap</a>
+            </li>
+          `).join('') + "</ul>";
+      } catch (err) {
+        console.error(err);
+        resultat.innerHTML = `<span style="color:red">Erreur : ${err.message}</span>`;
+      }
     }
-  }
-</script>
+  </script>
 </body>
 </html>
-
