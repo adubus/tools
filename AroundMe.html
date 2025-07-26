@@ -85,43 +85,55 @@ function capitalizeFirst(str) {
 }
 
 async function renderPlaces(places) {
-  const container = document.getElementById("places-list");
-  container.innerHTML = "";
-  const limitedPlaces = places.slice(0, 15);
+    const container = document.getElementById("places-list");
+    container.innerHTML = "";
+    const limitedPlaces = places.slice(0, 15);
 
-  for (const el of limitedPlaces) {
-    const name = el.tags.name || capitalizeFirst(el.tags.amenity) || "(Nom inconnu)";
-    const lat = el.lat || el.center?.lat;
-    const lon = el.lon || el.center?.lon;
-    const phone = el.tags.phone || "";
-    let address = "";
-    const street = el.tags["addr:street"] || "";
-    const number = el.tags["addr:housenumber"] || "";
+    for (const el of limitedPlaces) {
+      const name = el.tags.name || capitalizeFirst(el.tags.amenity) || "(Nom inconnu)";
+      const lat = el.lat || el.center?.lat;
+      const lon = el.lon || el.center?.lon;
+      const phone = el.tags.phone || "";
+      let address = "";
+      const street = el.tags["addr:street"] || "";
+      const number = el.tags["addr:housenumber"] || "";
 
-    if (street || number) {
-      address = `${street} ${number}`.trim();
-    } else if(lat && lon) {
-      address = await getAddressFromCoords(lat, lon);
-    } else {
-      address = "Adresse non disponible";
+      if (street || number) {
+        address = `${street} ${number}`.trim();
+      } else if(lat && lon) {
+        address = await getAddressFromCoords(lat, lon);
+      } else {
+        address = "Adresse non disponible";
+      }
+
+      const itineraireURL = `gps.html?toLat=${lat}&toLon=${lon}`;
+      const phoneLink = phone ? `<a href="tel:${phone}">📞 ${phone}</a><br/>` : "";
+
+      const vcfContent = `BEGIN:VCARD
+VERSION:3.0
+FN:${name}
+TEL:${phone}
+ADR:${address}
+NOTE:Coordonnées: ${lat}, ${lon}
+END:VCARD`;
+
+      const blob = new Blob([vcfContent], { type: 'text/vcard' });
+      const vcfUrl = URL.createObjectURL(blob);
+
+      const placeHTML = `
+        <div class="place-card">
+          <h3>${name}</h3>
+          <p>
+            ${phoneLink}
+            📍 ${address}<br/>
+            <a class="button" href="${itineraireURL}">🧭 Itinéraire</a>
+            <a class="button" href="${vcfUrl}" download="${name.replace(/\s+/g, "_")}.vcf">📇 Enregistrer dans les contacts</a>
+          </p>
+        </div>
+      `;
+      container.insertAdjacentHTML("beforeend", placeHTML);
     }
-
-    const itineraireURL = `gps.html?toLat=${lat}&toLon=${lon}`;
-    const phoneLink = phone ? `<a href="tel:${phone}">📞 ${phone}</a><br/>` : "";
-
-    const placeHTML = `
-      <div class="place-card">
-        <h3>${name}</h3>
-        <p>
-          ${phoneLink}
-          📍 ${address}<br/>
-          <a class="button" href="${itineraireURL}">🧭 Itinéraire</a>
-        </p>
-      </div>
-    `;
-    container.insertAdjacentHTML("beforeend", placeHTML);
   }
-}
 
     async function rechercherLieux(mode) {
       const villeInput = document.getElementById("ville").value.trim();
