@@ -107,7 +107,8 @@
               const phone = el.tags["phone"] || "Non renseigné";
               const latCoord = el.lat?.toFixed(5) || el.center?.lat.toFixed(5);
               const lonCoord = el.lon?.toFixed(5) || el.center?.lon.toFixed(5);
-              const itineraireURL = `gps.html?toLat=${latitude}&toLon=${longitude}`;
+              const itineraireURL = `gps.html?toLat=${latCoord}&toLon=${lonCoord}`;
+
               return `
                 <li>
                   <strong>${name}</strong><br/>
