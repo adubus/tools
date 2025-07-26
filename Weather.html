@@ -1,20 +1,21 @@
-
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Météo</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.10/css/weather-icons.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.10/css/weather-icons-wind.min.css" />
   <style>
     #meteo {
       font-size: 1.2em;
       margin-top: 1em;
     }
-    img {
-      vertical-align: middle;
+    .icon {
+      font-size: 2.5em;
+      margin: 0.2em;
     }
-        #result {
+    #result {
       background-color: #f0f8ff;
       padding: 1rem;
       border-radius: 1rem;
@@ -23,200 +24,175 @@
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
   </style>
-  <link rel="stylesheet" href="style.css" />  
 </head>
 <body>
   <button onclick="window.location.href='index.html'">Retour à la page d'accueil</button>
- 
   <h1>Météo actuelle</h1>
 
   <div style="text-align: center">
     <input type="text" id="city" placeholder="Entrez une ville" />
     <div style="text-align: center; margin-top: 1em;">
-  <button onclick="getWeather()">Météo actuelle</button>
-  <button onclick="getForecast()">Météo 5 jours</button>
-</div>
+      <button onclick="getWeather()">Météo actuelle</button>
+      <button onclick="getForecast()">Météo 5 jours</button>
+    </div>
   </div>
 
   <div id="result"></div>
 
   <script>
-   async function getWeather() {
-  const city = document.getElementById("city").value.trim();
-  const apiKey = "281eec27318c19122b887f323200a827";
-  const result = document.getElementById("result");
-
-  result.innerHTML = "Chargement...";
-
-  try {
-    let url = "";
-
-    if (city) {
-      // Si ville saisie, on cherche par nom de ville
-      url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${apiKey}&units=metric&lang=fr`;
-    } else {
-      // Sinon on tente la géolocalisation
-      if (!navigator.geolocation) {
-        result.innerHTML = "<p class='info' style='color:red'>Géolocalisation non supportée par ce navigateur. Veuillez saisir une ville.</p>";
-        return;
-      }
-
-      const position = await new Promise((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000 });
-      });
-
-      const lat = position.coords.latitude;
-      const lon = position.coords.longitude;
-
-      url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=fr`;
+    function getIconHTML(iconCode) {
+      const iconClass = `wi wi-owm-${iconCode}`;
+      return `<i class="${iconClass} icon"></i>`;
     }
 
-    const response = await fetch(url);
+    async function getWeather() {
+      const city = document.getElementById("city").value.trim();
+      const apiKey = "281eec27318c19122b887f323200a827";
+      const result = document.getElementById("result");
 
-    if (!response.ok) throw new Error("Ville introuvable ou erreur API");
+      result.innerHTML = "Chargement...";
 
-    const data = await response.json();
+      try {
+        let url = "";
+        if (city) {
+          url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${apiKey}&units=metric&lang=fr`;
+        } else {
+          if (!navigator.geolocation) {
+            result.innerHTML = "<p class='info' style='color:red'>Géolocalisation non supportée par ce navigateur. Veuillez saisir une ville.</p>";
+            return;
+          }
 
-    // Extraction des infos météo
-    const temperature = data.main.temp;
-    const tempMin = data.main.temp_min;
-    const tempMax = data.main.temp_max;
-    const description = data.weather[0].description;
-    const icon = data.weather[0].icon;
-    const humidity = data.main.humidity;
-    const pressure = data.main.pressure;
-    const windSpeed = data.wind.speed;
-    const windDeg = data.wind.deg;
-    const cloudiness = data.clouds.all;
-    const sunrise = new Date(data.sys.sunrise * 1000).toLocaleTimeString("fr-FR");
-    const sunset = new Date(data.sys.sunset * 1000).toLocaleTimeString("fr-FR");
+          const position = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000 });
+          });
 
-    const directions = ["Nord", "Nord-Est", "Est", "Sud-Est", "Sud", "Sud-Ouest", "Ouest", "Nord-Ouest"];
-    const windDir = directions[Math.round(windDeg / 45) % 8];
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+          url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=fr`;
+        }
 
-    result.innerHTML = `
-      <h2>${data.name}</h2>
-      <div class="info">
-        <img src="https://openweathermap.org/img/wn/${icon}@2x.png" alt="${description}" class="icon" />
-        <strong>${description}</strong>
-      </div>
-      <div class="info">🌡️ ${temperature} °C</div>
-      <div class="info">🔻 ${tempMin} °C &nbsp;&nbsp; 🔺 ${tempMax} °C</div>
-      <div class="info">💨 ${windSpeed} m/s (${windDir})</div>
-      <div class="info">💧 ${humidity}%</div>
-      <div class="info">🔽 ${pressure} hPa</div>
-      <div class="info">☁️ ${cloudiness}%</div>
-      <div class="info">🌅 ${sunrise}</div>
-      <div class="info">🌇 ${sunset}</div>
-    `;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("Ville introuvable ou erreur API");
 
-  } catch (error) {
-    result.innerHTML = `<p class='info' style='color:red'>Erreur : ${error.message}</p>`;
-  }
-}
-async function getForecast() {
-  const city = document.getElementById("city").value.trim();
-  const apiKey = "281eec27318c19122b887f323200a827";
-  const result = document.getElementById("result");
+        const data = await response.json();
 
-  result.innerHTML = "Chargement de la météo sur 5 jours...";
+        const temperature = data.main.temp;
+        const tempMin = data.main.temp_min;
+        const tempMax = data.main.temp_max;
+        const description = data.weather[0].description;
+        const iconId = data.weather[0].id;
+        const humidity = data.main.humidity;
+        const pressure = data.main.pressure;
+        const windSpeed = data.wind.speed;
+        const windDeg = data.wind.deg;
+        const cloudiness = data.clouds.all;
+        const sunrise = new Date(data.sys.sunrise * 1000).toLocaleTimeString("fr-FR");
+        const sunset = new Date(data.sys.sunset * 1000).toLocaleTimeString("fr-FR");
 
-  try {
-    let url = "";
+        const directions = ["Nord", "Nord-Est", "Est", "Sud-Est", "Sud", "Sud-Ouest", "Ouest", "Nord-Ouest"];
+        const windDir = directions[Math.round(windDeg / 45) % 8];
 
-    if (city) {
-      url = `https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(city)}&appid=${apiKey}&units=metric&lang=fr`;
-    } else {
-      if (!navigator.geolocation) {
-        result.innerHTML = "<p class='info' style='color:red'>Géolocalisation non supportée. Veuillez saisir une ville.</p>";
-        return;
+        result.innerHTML = `
+          <h2>${data.name}</h2>
+          <div class="info">
+            ${getIconHTML(iconId)}
+            <strong>${description}</strong>
+          </div>
+          <div class="info">🌡️ ${temperature} °C</div>
+          <div class="info">🔻 ${tempMin} °C &nbsp;&nbsp; 🔺 ${tempMax} °C</div>
+          <div class="info">💨 ${windSpeed} m/s (${windDir})</div>
+          <div class="info">💧 ${humidity}%</div>
+          <div class="info">🔽 ${pressure} hPa</div>
+          <div class="info">☁️ ${cloudiness}%</div>
+          <div class="info">🌅 ${sunrise}</div>
+          <div class="info">🌇 ${sunset}</div>
+        `;
+
+      } catch (error) {
+        result.innerHTML = `<p class='info' style='color:red'>Erreur : ${error.message}</p>`;
       }
-
-      const position = await new Promise((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000 });
-      });
-
-      const lat = position.coords.latitude;
-      const lon = position.coords.longitude;
-
-      url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=fr`;
     }
 
-    const response = await fetch(url);
-    if (!response.ok) throw new Error("Ville introuvable ou erreur API");
+    async function getForecast() {
+      const city = document.getElementById("city").value.trim();
+      const apiKey = "281eec27318c19122b887f323200a827";
+      const result = document.getElementById("result");
 
-    const data = await response.json();
+      result.innerHTML = "Chargement de la météo sur 5 jours...";
 
-    // data.list contient des prévisions toutes les 3h (40 entrées sur 5 jours)
-    // Pour simplifier, on va regrouper par jour (yyyy-mm-dd)
-    const forecastByDay = {};
+      try {
+        let url = "";
+        if (city) {
+          url = `https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(city)}&appid=${apiKey}&units=metric&lang=fr`;
+        } else {
+          if (!navigator.geolocation) {
+            result.innerHTML = "<p class='info' style='color:red'>Géolocalisation non supportée. Veuillez saisir une ville.</p>";
+            return;
+          }
 
-    data.list.forEach(item => {
-      const date = item.dt_txt.split(" ")[0];
-      if (!forecastByDay[date]) {
-        forecastByDay[date] = [];
+          const position = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000 });
+          });
+
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+          url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=fr`;
+        }
+
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("Ville introuvable ou erreur API");
+
+        const data = await response.json();
+        const forecastByDay = {};
+
+        data.list.forEach(item => {
+          const date = item.dt_txt.split(" ")[0];
+          if (!forecastByDay[date]) {
+            forecastByDay[date] = [];
+          }
+          forecastByDay[date].push(item);
+        });
+
+        let html = `<h2>Météo sur 5 jours pour ${data.city.name}</h2>`;
+        for (const date in forecastByDay) {
+          const dayItems = forecastByDay[date];
+          const tempMin = Math.min(...dayItems.map(i => i.main.temp_min));
+          const tempMax = Math.max(...dayItems.map(i => i.main.temp_max));
+          const pressions = dayItems.map(i => i.main.pressure);
+          const pressionDebut = pressions[0];
+          const pressionFin = pressions[pressions.length - 1];
+          const pressionMoy = pressions.reduce((a,b) => a + b, 0) / pressions.length;
+          let symbolePression = "➖";
+          if (pressionFin > pressionDebut) symbolePression = "⬆️";
+          else if (pressionFin < pressionDebut) symbolePression = "⬇️";
+
+          const descriptions = {};
+          dayItems.forEach(i => {
+            const desc = i.weather[0].description;
+            descriptions[desc] = (descriptions[desc] || 0) + 1;
+          });
+          const mainDesc = Object.entries(descriptions).sort((a,b) => b[1]-a[1])[0][0];
+          const iconId = dayItems[0].weather[0].id;
+          const dateObj = new Date(date);
+          const dateFr = dateObj.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+
+          html += `
+            <div style="border: 1px solid #ddd; margin-bottom: 1em; padding: 0.5em; border-radius: 8px;">
+              <h3>${dateFr}</h3>
+              ${getIconHTML(iconId)}
+              <p><strong>${mainDesc}</strong></p>
+              <p>Min: ${tempMin.toFixed(1)} °C &nbsp;&nbsp; Max: ${tempMax.toFixed(1)} °C</p>
+              <p>Pression : ${pressionMoy.toFixed(0)} hPa ${symbolePression}</p>
+            </div>
+          `;
+        }
+
+        result.innerHTML = html;
+
+      } catch (error) {
+        result.innerHTML = `<p class='info' style='color:red'>Erreur : ${error.message}</p>`;
       }
-      forecastByDay[date].push(item);
-    });
-
-    // Construire un résumé par jour
-    let html = `<h2>Météo sur 5 jours pour ${data.city.name}</h2>`;
-for (const date in forecastByDay) {
-  const dayItems = forecastByDay[date];
-
-  const temps = dayItems.map(i => i.main.temp);
-  const tempMin = Math.min(...dayItems.map(i => i.main.temp_min));
-  const tempMax = Math.max(...dayItems.map(i => i.main.temp_max));
-
-  // Pression (en hPa)
-  const pressions = dayItems.map(i => i.main.pressure);
-
-  // Prendre la pression au début et à la fin de la journée
-  const pressionDebut = pressions[0];
-  const pressionFin = pressions[pressions.length - 1];
-
-  // Calculer une pression moyenne pour affichage (ou pressionFin si tu préfères)
-  const pressionMoy = pressions.reduce((a,b) => a + b, 0) / pressions.length;
-
-  // Déterminer symbole + / − / stable
-  let symbolePression = "➖";
-  if (pressionFin > pressionDebut) symbolePression = "⬆️";
-  else if (pressionFin < pressionDebut) symbolePression = "⬇️";
-
-  // Choisir la météo la plus fréquente sur la journée
-  const descriptions = {};
-  dayItems.forEach(i => {
-    const desc = i.weather[0].description;
-    descriptions[desc] = (descriptions[desc] || 0) + 1;
-  });
-  const mainDesc = Object.entries(descriptions).sort((a,b) => b[1]-a[1])[0][0];
-
-  // Icône : prendre la première du jour
-  const icon = dayItems[0].weather[0].icon;
-
-  // Formater la date en français
-  const dateObj = new Date(date);
-  const dateFr = dateObj.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
-
-  html += `
-    <div style="border: 1px solid #ddd; margin-bottom: 1em; padding: 0.5em; border-radius: 8px;">
-      <h3>${dateFr}</h3>
-      <img src="https://openweathermap.org/img/wn/${icon}@2x.png" alt="${mainDesc}" />
-      <p><strong>${mainDesc}</strong></p>
-      <p>Min: ${tempMin.toFixed(1)} °C &nbsp;&nbsp; Max: ${tempMax.toFixed(1)} °C</p>
-      <p>Pression : ${pressionMoy.toFixed(0)} hPa ${symbolePression}</p>
-    </div>
-  `;
-}
-
-
-
-    result.innerHTML = html;
-
-  } catch (error) {
-    result.innerHTML = `<p class='info' style='color:red'>Erreur : ${error.message}</p>`;
-  }
-}
+    }
   </script>
 </body>
 </html>
