@@ -109,7 +109,7 @@ const windInfoHTML = `
 `;
         const directions = ["Nord", "Nord-Est", "Est", "Sud-Est", "Sud", "Sud-Ouest", "Ouest", "Nord-Ouest"];
         const windDir = directions[Math.round(windDeg / 45) % 8];
-document.getElementById("wind-info").innerHTML = windInfoHTML;
+
         result.innerHTML = `
           <h2>${data.name}</h2>
           <div class="info">
@@ -126,6 +126,8 @@ document.getElementById("wind-info").innerHTML = windInfoHTML;
           <div class="info">🌅 ${sunrise}</div>
           <div class="info">🌇 ${sunset}</div>
         `;
+
+        document.getElementById("wind-info").innerHTML = windInfoHTML;
 
       } catch (error) {
         result.innerHTML = `<p class='info' style='color:red'>Erreur : ${error.message}</p>`;
