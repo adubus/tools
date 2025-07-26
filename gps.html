@@ -22,6 +22,26 @@
   <div id="result" class="result"></div>
 
   <script>
+    
+let prefilledToCoords = null;
+
+window.addEventListener("DOMContentLoaded", () => {
+  const params = new URLSearchParams(window.location.search);
+  const toLat = params.get("toLat");
+  const toLon = params.get("toLon");
+
+  if (toLat && toLon) {
+    prefilledToCoords = {
+      lat: toLat,
+      lon: toLon
+    };
+    document.getElementById("toCity").value = `${toLat}, ${toLon}`;
+  }
+});
+
+
+
+    
     async function getCoordinates(city) {
       const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city)}`;
       const response = await fetch(url);
@@ -45,7 +65,15 @@
       }
 
       try {
-        const toCoords = await getCoordinates(toCity);
+        let toCoords;
+if (prefilledToCoords) {
+  toCoords = prefilledToCoords;
+} else if (/^\d+(\.\d+)?[, ]\d+(\.\d+)?$/.test(toCity)) {
+  const [lat, lon] = toCity.split(/[, ]/);
+  toCoords = { lat: lat.trim(), lon: lon.trim() };
+} else {
+  toCoords = await getCoordinates(toCity);
+}
         let fromCoords = null;
 
         if (fromCity) {
