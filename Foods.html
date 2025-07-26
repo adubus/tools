@@ -153,55 +153,6 @@
 }
 
 
-        if (mode === "liste") {
-          mapDiv.style.display = "none";
-          resultat.innerHTML = `<h2>📍 Résultats autour de ${ville || "votre position"} :</h2><ul>` +
-            data.elements.map(el => {
-              const name = el.tags.name || "Sans nom";
-              const street = el.tags["addr:street"] || "";
-              const number = el.tags["addr:housenumber"] || "";
-              const phone = el.tags["phone"];
-              const phoneHTML = phone ? `Téléphone : <a href="tel:${phone}">${phone}</a><br/>` : "";
-              const latCoord = el.lat?.toFixed(5) || el.center?.lat.toFixed(5);
-              const lonCoord = el.lon?.toFixed(5) || el.center?.lon.toFixed(5);
-              const itineraireURL = `gps.html?toLat=${latCoord}&toLon=${lonCoord}`;
-
-              return `
-                <li>
-                  <strong>${name}</strong><br/>
-                  Type : ${cat}<br/>
-                  Adresse : ${street} ${number}<br/>
-                  ${phoneHTML}
-                  <a href="${itineraireURL}" class="button">🧭 Itinéraire</a>
-                </li>
-              `;
-            }).join("") + "</ul>";
-        } else {
-          resultat.innerHTML = "";
-          mapDiv.style.display = "block";
-          mapDiv.innerHTML = "";
-
-          const map = L.map("map").setView([lat, lon], 15);
-          L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-            attribution: '&copy; OpenStreetMap'
-          }).addTo(map);
-
-          data.elements.forEach(el => {
-            const name = el.tags.name || "Sans nom";
-            const latitude = el.lat || el.center?.lat;
-            const longitude = el.lon || el.center?.lon;
-            if (latitude && longitude) {
-              L.marker([latitude, longitude])
-                .addTo(map)
-                .bindPopup(`<strong>${name}</strong><br/>Type : ${cat}`);
-            }
-          });
-        }
-      } catch (e) {
-        resultat.innerHTML = `<span style="color:red">Erreur : ${e.message}</span>`;
-        console.error(e);
-      }
-    }
   </script>
 </body>
 </html>
