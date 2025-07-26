@@ -175,4 +175,26 @@
           mapDiv.innerHTML = "";
 
           const map = L.map("map").setView([lat, lon], 15);
-          L.tileLayer("https://{s}.tile.openstreetmap.
+          L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution: '&copy; OpenStreetMap'
+          }).addTo(map);
+
+          data.elements.forEach(el => {
+            const name = el.tags.name || "Sans nom";
+            const latitude = el.lat || el.center?.lat;
+            const longitude = el.lon || el.center?.lon;
+            if (latitude && longitude) {
+              L.marker([latitude, longitude])
+                .addTo(map)
+                .bindPopup(`<strong>${name}</strong><br/>Type : ${cat}`);
+            }
+          });
+        }
+      } catch (e) {
+        resultat.innerHTML = `<span style="color:red">Erreur : ${e.message}</span>`;
+        console.error(e);
+      }
+    }
+  </script>
+</body>
+</html>
