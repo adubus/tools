@@ -23,67 +23,79 @@
   <div id="map">Carte en attente…</div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script>
-    let carte;
+<script>
+  let carte;
+  let marqueurs = [];
 
-    async function rechercherBalades() {
-      const ville = document.getElementById("ville").value.trim();
+  async function rechercherBalades() {
+    const ville = document.getElementById("ville").value.trim();
+    document.getElementById("map").innerHTML = "Chargement...";
 
-      let lat, lon;
+    let lat, lon;
 
-      try {
-        if (ville) {
-          const geo = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(ville)}`).then(r => r.json());
-          if (!geo.length) throw new Error("Ville introuvable");
-          lat = parseFloat(geo[0].lat);
-          lon = parseFloat(geo[0].lon);
-        } else {
-          const position = await new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject));
-          lat = position.coords.latitude;
-          lon = position.coords.longitude;
+    try {
+      if (ville) {
+        const geo = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(ville)}`).then(r => r.json());
+        if (!geo.length) throw new Error("Ville introuvable.");
+        lat = parseFloat(geo[0].lat);
+        lon = parseFloat(geo[0].lon);
+      } else {
+        const position = await new Promise((resolve, reject) =>
+          navigator.geolocation.getCurrentPosition(resolve, () => reject(new Error("Géolocalisation refusée.")))
+        );
+        lat = position.coords.latitude;
+        lon = position.coords.longitude;
+      }
+
+      const query = `
+        [out:json];
+        (
+          relation["route"~"foot|hiking"](around:10000,${lat},${lon});
+        );
+        out tags center;
+      `;
+
+      const data = await fetch("https://overpass-api.de/api/interpreter", {
+        method: "POST",
+        body: query,
+      }).then(r => r.json());
+
+      if (!data.elements.length) {
+        document.getElementById("map").innerHTML = "🚫 Aucune balade trouvée.";
+        return;
+      }
+
+      // Initialiser ou réinitialiser la carte
+      if (!carte) {
+        carte = L.map('map').setView([lat, lon], 12);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; OpenStreetMap'
+        }).addTo(carte);
+      } else {
+        carte.setView([lat, lon], 12);
+        marqueurs.forEach(m => carte.removeLayer(m));
+        marqueurs = [];
+      }
+
+      data.elements.forEach(el => {
+        const name = el.tags.name || "Balade";
+        const desc = el.tags.description || "";
+        const url = el.tags.website || `https://www.openstreetmap.org/relation/${el.id}`;
+        const popup = `<strong>${name}</strong><br>${desc}<br><a href="${url}" target="_blank">Voir sur la carte</a>`;
+
+        const latC = el.center?.lat;
+        const lonC = el.center?.lon;
+        if (latC && lonC) {
+          const marker = L.marker([latC, lonC]).addTo(carte).bindPopup(popup);
+          marqueurs.push(marker);
         }
+      });
 
-        const overpassQuery = `
-          [out:json];
-          (
-            relation["route"~"foot|hiking"](around:10000,${lat},${lon});
-          );
-          out tags center;
-        `;
+    } catch (e) {
+      console.error(e);
+      document.getElementById("map").innerHTML = `❌ Erreur : ${e.message}`;
+    }
+  }
+</script>
+</body>
 
-        const data = await fetch("https://overpass-api.de/api/interpreter", {
-          method: "POST",
-          body: overpassQuery
-        }).then(r => r.json());
-
-        if (!data.elements.length) {
-          alert("Aucune balade trouvée.");
-          return;
-        }
-
-        // Initialiser carte si besoin
-        if (!carte) {
-          carte = L.map('map').setView([lat, lon], 12);
-          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap'
-          }).addTo(carte);
-        } else {
-          carte.setView([lat, lon], 12);
-        }
-
-        // Nettoyer anciens marqueurs
-        if (carte._layers) {
-          for (const i in carte._layers) {
-            if (carte._layers[i]._icon || carte._layers[i]._path) {
-              try {
-                carte.removeLayer(carte._layers[i]);
-              } catch(e) {}
-            }
-          }
-        }
-
-        // Ajouter marqueurs
-        data.elements.forEach(el => {
-          const name = el.tags.name || "Balade sans nom";
-          const description = el.tags.description || "";
-          const website = el.tags.website ? `<a href="${el.tags.website}" target="_blank">Site offic_
