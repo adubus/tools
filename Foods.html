@@ -16,12 +16,67 @@
   <button onclick="window.location.href='index.html'">Retour à l'accueil</button>
   <h1>☕ Restaurants, Cafés, Boulangeries autour de moi</h1>
 
-  <label for="type">Type de lieu :</label>
-  <select id="type">
+<label for="categorie">Catégorie :</label>
+<select id="categorie">
+  <optgroup label="🍴 Alimentation / Boissons">
     <option value="restaurant">Restaurant</option>
+    <option value="fast_food">Restauration rapide</option>
     <option value="cafe">Café</option>
+    <option value="bar">Bar</option>
+    <option value="pub">Pub</option>
+    <option value="biergarten">Biergarten</option>
+    <option value="ice_cream">Glacier</option>
+    <option value="food_court">Food court</option>
     <option value="bakery">Boulangerie</option>
-  </select>
+    <option value="butcher">Boucherie</option>
+    <option value="supermarket">Supermarché</option>
+    <option value="convenience">Épicerie</option>
+    <option value="greengrocer">Primeur</option>
+  </optgroup>
+
+  <optgroup label="🛍️ Commerces">
+    <option value="clothes">Magasin de vêtements</option>
+    <option value="shoes">Chaussures</option>
+    <option value="beauty">Beauté / Salon</option>
+    <option value="florist">Fleuriste</option>
+    <option value="hairdresser">Coiffeur</option>
+    <option value="optician">Opticien</option>
+    <option value="pharmacy">Pharmacie</option>
+  </optgroup>
+
+  <optgroup label="🏛️ Culture & Tourisme">
+    <option value="museum">Musée</option>
+    <option value="theatre">Théâtre</option>
+    <option value="cinema">Cinéma</option>
+    <option value="gallery">Galerie</option>
+    <option value="library">Bibliothèque</option>
+    <option value="attraction">Attraction touristique</option>
+    <option value="viewpoint">Point de vue</option>
+    <option value="monument">Monument</option>
+    <option value="artwork">Œuvre d'art</option>
+  </optgroup>
+
+  <optgroup label="🏞️ Loisirs / Nature">
+    <option value="park">Parc</option>
+    <option value="playground">Aire de jeux</option>
+    <option value="sports_centre">Centre sportif</option>
+    <option value="swimming_pool">Piscine</option>
+    <option value="stadium">Stade</option>
+    <option value="pitch">Terrain de sport</option>
+    <option value="zoo">Zoo</option>
+    <option value="theme_park">Parc d'attractions</option>
+  </optgroup>
+
+  <optgroup label="🚗 Transport / Pratique">
+    <option value="parking">Parking</option>
+    <option value="fuel">Station-service</option>
+    <option value="atm">Distributeur automatique</option>
+    <option value="bank">Banque</option>
+    <option value="post_office">Bureau de poste</option>
+    <option value="toilets">Toilettes publiques</option>
+    <option value="charging_station">Borne de recharge électrique</option>
+  </optgroup>
+</select>
   <button onclick="rechercherLieux()">Rechercher</button>
 
   <div id="map"></div>
