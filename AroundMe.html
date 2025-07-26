@@ -1,157 +1,204 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>🍽 Autour de moi</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <title>Restaurants & Lieux autour de moi</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
-    body { font-family: Arial, sans-serif; padding: 1rem; }
-    h1 { font-size: 1.5rem; }
-    label, select, button { margin: 0.5rem 0; display: block; }
-    ul { padding-left: 0; }
-    li { list-style: none; margin: 1rem 0; border-bottom: 1px solid #ccc; padding-bottom: 0.5rem; }
-    .button { display: inline-block; margin: 0.25rem 0.5rem 0.25rem 0; padding: 0.4rem 0.6rem; background: #eee; border-radius: 5px; text-decoration: none; }
+    body { font-family: sans-serif; padding: 20px; }
+    input, select, button { margin: 5px 0; padding: 6px; font-size: 16px; }
+    #map { height: 500px; margin-top: 15px; display: none; }
+    ul, #places-list { list-style: none; padding: 0; }
+    li, .place-card { margin-bottom: 15px; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
+    .button { display: inline-block; margin-top: 5px; padding: 5px 10px; background: #4CAF50; color: white; text-decoration: none; border-radius: 4px; }
+    .button:hover { background: #45a049; }
   </style>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h1>🍽 Trouver un lieu autour de moi</h1>
-  <label for="category">Catégorie :</label>
-  <select id="category">
-    <option value="restaurant">Restaurant</option>
-    <option value="cafe">Café</option>
-    <option value="bakery">Boulangerie</option>
-    <option value="pharmacy">Pharmacie</option>
-    <option value="bar">Bar</option>
-    <option value="fast_food">Fast Food</option>
-    <option value="ice_cream">Glacier</option>
-  </select>
+  <button onclick="window.location.href='index.html'">Retour à la page d'accueil</button>
+  <h1>🍴 Restaurants & lieux autour</h1>
 
-  <label for="ville">ou entrer une ville :</label>
-  <input type="text" id="ville" placeholder="Paris">
+  <label for="ville">Ville (laisser vide pour géolocalisation) :</label><br />
+  <input type="text" id="ville" placeholder="ex : Nantes" /><br />
 
-  <button onclick="rechercherListe()">📄 Afficher sous forme de liste</button>
-  <button onclick="rechercherCarte()">🗺 Afficher sur la carte</button>
+  <label for="categorie">Catégorie :</label><br />
+  <select id="categorie">
+    <optgroup label="🍴 Alimentation / Boissons">
+      <option value="restaurant">Restaurant</option>
+      <option value="fast_food">Restauration rapide</option>
+      <option value="cafe">Café</option>
+      <option value="bar">Bar</option>
+      <option value="ice_cream">Glacier</option>
+      <option value="pharmacy">Pharmacie</option>
+    </optgroup>
+    <optgroup label="🏛️ Culture & Tourisme">
+      <option value="museum">Musée</option>
+      <option value="theatre">Théâtre</option>
+      <option value="cinema">Cinéma</option>
+    </optgroup>
+    <optgroup label="🏞️ Services">
+      <option value="parking">Parking</option>
+      <option value="fuel">Station-service</option>
+      <option value="atm">Distributeur automatique</option>
+      <option value="bank">Banque</option>
+      <option value="post_office">Bureau de poste</option>
+      <option value="toilets">Toilettes publiques</option>
+      <option value="charging_station">Borne de recharge électrique</option>
+    </optgroup>
+  </select><br />
+
+  <button onclick="rechercherLieux('liste')">📋 Afficher sous forme de liste</button>
+  <button onclick="rechercherLieux('carte')">🗺️ Afficher sur la carte</button>
 
   <div id="resultat"></div>
+  <div id="places-list"></div>
+  <div id="map"></div>
 
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    let mode = "liste";
+    const reverseGeocodeCache = {};
 
-    async function rechercherListe() {
-      mode = "liste";
-      await rechercher();
-    }
-
-    async function rechercherCarte() {
-      mode = "carte";
-      await rechercher();
-    }
-
-    async function rechercher() {
-      const ville = document.getElementById("ville").value.trim();
-      const cat = document.getElementById("category").value;
-      const resultat = document.getElementById("resultat");
-      resultat.innerHTML = "⏳ Recherche...";
-
-      let coords = null;
-
-      if (ville) {
-        const geo = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${ville}`);
-        const json = await geo.json();
-        if (json.length === 0) {
-          resultat.innerHTML = "❌ Ville introuvable";
-          return;
-        }
-        coords = { lat: json[0].lat, lon: json[0].lon };
-      } else if (navigator.geolocation) {
-        try {
-          coords = await new Promise((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(pos =>
-              resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
-              reject
-            );
-          });
-        } catch {
-          resultat.innerHTML = "❌ Position non disponible";
-          return;
-        }
-      } else {
-        resultat.innerHTML = "❌ Activez la géolocalisation ou entrez une ville";
-        return;
+    async function getAddressFromCoords(lat, lon) {
+      const key = `${lat.toFixed(5)},${lon.toFixed(5)}`;
+      if (reverseGeocodeCache[key]) {
+        return reverseGeocodeCache[key];
       }
-
-      const pois = await fetchPlaces(coords, cat);
-      if (!pois.length) {
-        resultat.innerHTML = "❌ Aucun lieu trouvé.";
-        return;
-      }
-
-      if (mode === "carte") {
-        const markers = pois.map(poi => `&marker=lat${poi.lat}lon${poi.lon}`);
-        const url = `https://www.openstreetmap.org/export/embed.html?bbox=${pois[0].lon - 0.05},${pois[0].lat - 0.05},${pois[0].lon + 0.05},${pois[0].lat + 0.05}`;
-        resultat.innerHTML = `<iframe width="100%" height="400" src="${url}" loading="lazy"></iframe>`;
-      } else {
-        const list = pois.map(poi => {
-          const name = poi.tags.name || poi.tags["name:fr"] || "Nom inconnu";
-          const street = poi.tags["addr:street"] || "";
-          const number = poi.tags["addr:housenumber"] || "";
-          const phone = poi.tags.phone || poi.tags["contact:phone"] || "";
-          const cat = catToLabel(poi.tags);
-          const lat = poi.lat;
-          const lon = poi.lon;
-
-          const itineraireURL = `gps.html?from=maPosition&to=${lat},${lon}`;
-
-          const phoneHTML = phone ? `<a class="button" href="tel:${phone}">📞 ${phone}</a><br/>` : "";
-
-          const vcard = `BEGIN:VCARD\nVERSION:3.0\nFN:${name}\nORG:${cat}\nTEL:${phone || ""}\nADR:;;${number} ${street}\nEND:VCARD`;
-          const vcardBlob = new Blob([vcard], { type: "text/vcard" });
-          const vcardURL = URL.createObjectURL(vcardBlob);
-
-          return `
-            <li>
-              <strong>${name === "Nom inconnu" ? cat : name}</strong><br/>
-              Type : ${cat}<br/>
-              Adresse : ${street} ${number}<br/>
-              ${phoneHTML}
-              <a href="${itineraireURL}" class="button">🧭 Itinéraire</a>
-              <a href="${vcardURL}" download="${(name !== "Nom inconnu" ? name : cat).replace(/\s+/g, "_")}.vcf" class="button">💾 Enregistrer le contact</a>
-            </li>
-          `;
-        }).join("");
-
-        resultat.innerHTML = `<ul>${list}</ul>`;
-      }
-    }
-
-    async function fetchPlaces(coords, category) {
-      const steps = [1000, 2000, 5000, 10000];
-      for (const radius of steps) {
-        const query = `[out:json];node(around:${radius},${coords.lat},${coords.lon})[amenity=${category}];out;`;
-        const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
+      try {
+        const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`;
         const response = await fetch(url);
         const data = await response.json();
-        if (data.elements.length >= 10 || radius === 10000) {
-          return data.elements;
-        }
+        const address = data.display_name || "Adresse non disponible";
+        reverseGeocodeCache[key] = address;
+        // Pause 1s pour limiter la fréquence des requêtes
+        await new Promise(r => setTimeout(r, 1000));
+        return address;
+      } catch {
+        return "Adresse non disponible";
       }
-      return [];
     }
 
-    function catToLabel(tags) {
-      if (tags.amenity) {
-        const map = {
-          restaurant: "Restaurant",
-          cafe: "Café",
-          bakery: "Boulangerie",
-          pharmacy: "Pharmacie",
-          bar: "Bar",
-          fast_food: "Fast Food",
-          ice_cream: "Glacier"
-        };
-        return map[tags.amenity] || tags.amenity;
+function capitalizeFirst(str) {
+  if (!str) return "";
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+async function renderPlaces(places) {
+  const container = document.getElementById("places-list");
+  container.innerHTML = "";
+  const limitedPlaces = places.slice(0, 15);
+
+  for (const el of limitedPlaces) {
+    const name = el.tags.name || capitalizeFirst(el.tags.amenity) || "(Nom inconnu)";
+    const lat = el.lat || el.center?.lat;
+    const lon = el.lon || el.center?.lon;
+    const phone = el.tags.phone || "";
+    let address = "";
+    const street = el.tags["addr:street"] || "";
+    const number = el.tags["addr:housenumber"] || "";
+
+    if (street || number) {
+      address = `${street} ${number}`.trim();
+    } else if(lat && lon) {
+      address = await getAddressFromCoords(lat, lon);
+    } else {
+      address = "Adresse non disponible";
+    }
+
+    const itineraireURL = `gps.html?toLat=${lat}&toLon=${lon}`;
+    const phoneLink = phone ? `<a href="tel:${phone}">📞 ${phone}</a><br/>` : "";
+
+    const placeHTML = `
+      <div class="place-card">
+        <h3>${name}</h3>
+        <p>
+          ${phoneLink}
+          📍 ${address}<br/>
+          <a class="button" href="${itineraireURL}">🧭 Itinéraire</a>
+        </p>
+      </div>
+    `;
+    container.insertAdjacentHTML("beforeend", placeHTML);
+  }
+}
+
+    async function rechercherLieux(mode) {
+      const villeInput = document.getElementById("ville").value.trim();
+      const cat = document.getElementById("categorie").value;
+      const resultat = document.getElementById("resultat");
+      const mapDiv = document.getElementById("map");
+      const placesList = document.getElementById("places-list");
+      resultat.innerHTML = "Chargement…";
+      mapDiv.style.display = "none";
+      placesList.innerHTML = "";
+
+      let lat, lon, villeLabel = villeInput;
+
+      try {
+        if (villeInput) {
+          const geo = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(villeInput)}`).then(r => r.json());
+          if (!geo.length) throw new Error("Ville introuvable");
+          lat = geo[0].lat;
+          lon = geo[0].lon;
+        } else {
+          const position = await new Promise((resolve, reject) =>
+            navigator.geolocation.getCurrentPosition(resolve, reject));
+          lat = position.coords.latitude;
+          lon = position.coords.longitude;
+
+          const reverse = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`).then(r => r.json());
+          villeLabel = reverse.address.city || reverse.address.town || reverse.address.village || "votre position";
+        }
+
+        const radius = 3000;
+        const query = `
+          [out:json];
+          (
+            node["amenity"="${cat}"](around:${radius},${lat},${lon});
+            way["amenity"="${cat}"](around:${radius},${lat},${lon});
+            relation["amenity"="${cat}"](around:${radius},${lat},${lon});
+          );
+          out center;`;
+
+        const overpassURL = "https://overpass-api.de/api/interpreter?data=" + encodeURIComponent(query);
+        const data = await fetch(overpassURL).then(r => r.json());
+
+        if (!data.elements.length) {
+          resultat.innerHTML = "Aucun lieu trouvé.";
+          return;
+        }
+
+        if (mode === "liste") {
+          mapDiv.style.display = "none";
+          resultat.innerHTML = `<h2>📍 Résultats autour de ${villeLabel} :</h2>`;
+          await renderPlaces(data.elements);
+        } else {
+          placesList.innerHTML = "";
+          resultat.innerHTML = "";
+          mapDiv.style.display = "block";
+          mapDiv.innerHTML = "";
+
+          const map = L.map("map").setView([lat, lon], 15);
+          L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution: '&copy; OpenStreetMap'
+          }).addTo(map);
+
+          data.elements.forEach(el => {
+            const name = el.tags.name || "Sans nom";
+            const latitude = el.lat || el.center?.lat;
+            const longitude = el.lon || el.center?.lon;
+            if (latitude && longitude) {
+              L.marker([latitude, longitude])
+                .addTo(map)
+                .bindPopup(`<strong>${name}</strong><br/>Type : ${cat}`);
+            }
+          });
+        }
+      } catch (e) {
+        resultat.innerHTML = `<span style="color:red">Erreur : ${e.message}</span>`;
+        console.error(e);
       }
-      return "Lieu";
     }
   </script>
 </body>
