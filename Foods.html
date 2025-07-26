@@ -104,7 +104,8 @@
               const name = el.tags.name || "Sans nom";
               const street = el.tags["addr:street"] || "";
               const number = el.tags["addr:housenumber"] || "";
-              const phone = el.tags["phone"] || "Non renseigné";
+              const phone = el.tags["phone"];
+              const phoneHTML = phone ? `Téléphone : <a href="tel:${phone}">${phone}</a><br/>` : "";
               const latCoord = el.lat?.toFixed(5) || el.center?.lat.toFixed(5);
               const lonCoord = el.lon?.toFixed(5) || el.center?.lon.toFixed(5);
               const itineraireURL = `gps.html?toLat=${latCoord}&toLon=${lonCoord}`;
@@ -114,7 +115,7 @@
                   <strong>${name}</strong><br/>
                   Type : ${cat}<br/>
                   Adresse : ${street} ${number}<br/>
-                  Téléphone : ${phone}<br/>
+                  ${phoneHTML}
                   <a href="${itineraireURL}" class="button">🧭 Itinéraire</a>
                 </li>
               `;
