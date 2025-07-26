@@ -1,218 +1,94 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Météo</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.10/css/weather-icons.min.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.10/css/weather-icons-wind.min.css" />
+  <meta charset="UTF-8">
+  <title>Météo actuelle</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.10/css/weather-icons.min.css">
+  <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.10/css/weather-icons-wind.min.css">
   <style>
-    #meteo {
-      font-size: 1.2em;
-      margin-top: 1em;
+    body {
+      font-family: sans-serif;
+      padding: 1rem;
+      background: #eef6ff;
+      color: #333;
     }
     .icon {
-      font-size: 2.5em;
-      margin: 0.2em;
-      color: #007BFF; /* Icônes météo en bleu */
+      font-size: 2rem;
+      vertical-align: middle;
+      margin-right: 0.5rem;
     }
-    #result {
-      background-color: #f0f8ff;
+    .meteo {
+      background: white;
       padding: 1rem;
-      border-radius: 1rem;
-      max-width: 500px;
-      margin: 1rem auto;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      max-width: 600px;
+      margin: auto;
+    }
+    h2 {
+      text-align: center;
+      color: #0077cc;
     }
   </style>
-    <link rel="stylesheet" href="style.css" />  
 </head>
 <body>
-  <button onclick="window.location.href='index.html'">Retour à la page d'accueil</button>
-  <h1>Météo actuelle</h1>
-
-  <div style="text-align: center">
-    <input type="text" id="city" placeholder="Entrez une ville" />
-    <div style="text-align: center; margin-top: 1em;">
-      <button onclick="getWeather()">Météo actuelle</button>
-      <button onclick="getForecast()">Météo 5 jours</button>
-    </div>
+  <div class="meteo">
+    <h2>Météo actuelle</h2>
+    <div id="weather"></div>
   </div>
 
-  <div id="result"></div>
-
   <script>
-    function getIconHTML(iconCode) {
-      const iconClass = `wi wi-owm-${iconCode}`;
-      return `<i class="${iconClass} icon"></i>`;
-    }
-    
-    function windSpeedToBeaufort(windSpeedMps) {
-      const scale = [
-        0.2, 1.5, 3.3, 5.4, 7.9, 10.7, 13.8,
-        17.1, 20.7, 24.4, 28.4, 32.6, Infinity
-      ];
+    // Beaufort scale: 0–12
+    function windSpeedToBeaufort(speed) {
+      const scale = [0.2, 1.5, 3.3, 5.4, 7.9, 10.7, 13.8, 17.1, 20.7, 24.4, 28.4, 32.6];
       for (let i = 0; i < scale.length; i++) {
-        if (windSpeedMps <= scale[i]) {
-          return i;
-        }
+        if (speed < scale[i]) return i;
       }
       return 12;
     }
+
+    // Conversion en point cardinal
+    function degToCardinal(deg) {
+      const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+      return dirs[Math.round(deg / 22.5) % 16];
+    }
+
     async function getWeather() {
-      const city = document.getElementById("city").value.trim();
-      const apiKey = "281eec27318c19122b887f323200a827";
-      const result = document.getElementById("result");
+      const apiKey = 'TON_API_KEY_OPENWEATHER'; // Remplace avec ta clé OpenWeather
+      const lat = 48.8566; // Exemple : Paris
+      const lon = 2.3522;
 
-      result.innerHTML = "Chargement...";
+      const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&lang=fr&appid=${apiKey}`;
+      const res = await fetch(url);
+      const data = await res.json();
 
-      try {
-        let url = "";
-        if (city) {
-          url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${apiKey}&units=metric&lang=fr`;
-        } else {
-          if (!navigator.geolocation) {
-            result.innerHTML = "<p class='info' style='color:red'>Géolocalisation non supportée par ce navigateur. Veuillez saisir une ville.</p>";
-            return;
-          }
+      const icon = data.weather[0].icon;
+      const description = data.weather[0].description;
+      const temp = data.main.temp;
+      const windDeg = data.wind.deg;
+      const windSpeed = data.wind.speed;
+      const beaufort = windSpeedToBeaufort(windSpeed);
 
-          const position = await new Promise((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000 });
-          });
+      const direction = degToCardinal(windDeg);
 
-          const lat = position.coords.latitude;
-          const lon = position.coords.longitude;
-          url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=fr`;
-        }
+      const html = `
+        <p><img src="https://openweathermap.org/img/wn/${icon}@2x.png" alt="${description}" class="icon" />
+        ${description}, ${temp.toFixed(1)} °C</p>
+        <p>
+          <i class="wi wi-wind-beaufort-${beaufort} icon"></i>
+          Vent : ${windSpeed.toFixed(1)} m/s (Beaufort ${beaufort})<br/>
+          <i class="wi wi-wind towards-${windDeg}-deg icon"></i>
+          Direction : ${windDeg}° (${direction})
+        </p>
+      `;
 
-        const response = await fetch(url);
-        if (!response.ok) throw new Error("Ville introuvable ou erreur API");
-
-        const data = await response.json();
-
-        const temperature = data.main.temp;
-        const tempMin = data.main.temp_min;
-        const tempMax = data.main.temp_max;
-        const description = data.weather[0].description;
-        const iconId = data.weather[0].id;
-        const humidity = data.main.humidity;
-        const pressure = data.main.pressure;
-        const windSpeed = data.wind.speed;
-        const beaufort = windSpeedToBeaufort(windSpeed);
-        const windDeg = data.wind.deg;
-        const cloudiness = data.clouds.all;
-        const sunrise = new Date(data.sys.sunrise * 1000).toLocaleTimeString("fr-FR");
-        const sunset = new Date(data.sys.sunset * 1000).toLocaleTimeString("fr-FR");
-const windInfoHTML = `
-  <i class="wi wi-wind-beaufort-${beaufort}" style="font-size: 2em; color: #007BFF;"></i>
-  
-`;
-        const directions = ["Nord", "Nord-Est", "Est", "Sud-Est", "Sud", "Sud-Ouest", "Ouest", "Nord-Ouest"];
-        const windDir = directions[Math.round(windDeg / 45) % 8];
-
-        result.innerHTML = `
-          <h2>${data.name}</h2>
-          <div class="info">
-            ${getIconHTML(iconId)}
-            <strong>${description}</strong>
-          </div>
-          <div class="info">🌡️ ${temperature} °C</div>
-          <div class="info">🔻 ${tempMin} °C &nbsp;&nbsp; 🔺 ${tempMax} °C</div>
-          <div id="wind-info" style="display: flex; align-items: center; gap: 8px; font-size: 1.2em;"> (${windDir})</div>
-          <div class="info">💧 ${humidity}%</div>
-          <div class="info">🔽 ${pressure} hPa</div>
-          <div class="info">☁️ ${cloudiness}%</div>
-          <div class="info">🌅 ${sunrise}</div>
-          <div class="info">🌇 ${sunset}</div>
-        `;
-
-        document.getElementById("wind-info").innerHTML = windInfoHTML;
-
-      } catch (error) {
-        result.innerHTML = `<p class='info' style='color:red'>Erreur : ${error.message}</p>`;
-      }
+      document.getElementById('weather').innerHTML = html;
     }
 
-    async function getForecast() {
-      const city = document.getElementById("city").value.trim();
-      const apiKey = "281eec27318c19122b887f323200a827";
-      const result = document.getElementById("result");
-
-      result.innerHTML = "Chargement de la météo sur 5 jours...";
-
-      try {
-        let url = "";
-        if (city) {
-          url = `https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(city)}&appid=${apiKey}&units=metric&lang=fr`;
-        } else {
-          if (!navigator.geolocation) {
-            result.innerHTML = "<p class='info' style='color:red'>Géolocalisation non supportée. Veuillez saisir une ville.</p>";
-            return;
-          }
-
-          const position = await new Promise((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000 });
-          });
-
-          const lat = position.coords.latitude;
-          const lon = position.coords.longitude;
-          url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=fr`;
-        }
-
-        const response = await fetch(url);
-        if (!response.ok) throw new Error("Ville introuvable ou erreur API");
-
-        const data = await response.json();
-        const forecastByDay = {};
-
-        data.list.forEach(item => {
-          const date = item.dt_txt.split(" ")[0];
-          if (!forecastByDay[date]) {
-            forecastByDay[date] = [];
-          }
-          forecastByDay[date].push(item);
-        });
-
-        let html = `<h2>Météo sur 5 jours pour ${data.city.name}</h2>`;
-        for (const date in forecastByDay) {
-          const dayItems = forecastByDay[date];
-          const tempMin = Math.min(...dayItems.map(i => i.main.temp_min));
-          const tempMax = Math.max(...dayItems.map(i => i.main.temp_max));
-          const pressions = dayItems.map(i => i.main.pressure);
-          const pressionDebut = pressions[0];
-          const pressionFin = pressions[pressions.length - 1];
-          const pressionMoy = pressions.reduce((a,b) => a + b, 0) / pressions.length;
-          let symbolePression = "➖";
-          if (pressionFin > pressionDebut) symbolePression = "⬆️";
-          else if (pressionFin < pressionDebut) symbolePression = "⬇️";
-
-          const descriptions = {};
-          dayItems.forEach(i => {
-            const desc = i.weather[0].description;
-            descriptions[desc] = (descriptions[desc] || 0) + 1;
-          });
-          const mainDesc = Object.entries(descriptions).sort((a,b) => b[1]-a[1])[0][0];
-          const iconId = dayItems[0].weather[0].id;
-          const dateObj = new Date(date);
-          const dateFr = dateObj.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
-
-          html += `
-            <div style="border: 1px solid #ddd; margin-bottom: 1em; padding: 0.5em; border-radius: 8px;">
-              <h3>${dateFr}</h3>
-              ${getIconHTML(iconId)}
-              <p><strong>${mainDesc}</strong></p>
-              <p>Min: ${tempMin.toFixed(1)} °C &nbsp;&nbsp; Max: ${tempMax.toFixed(1)} °C</p>
-              <p>Pression : ${pressionMoy.toFixed(0)} hPa ${symbolePression}</p>
-            </div>
-          `;
-        }
-
-        result.innerHTML = html;
-
-      } catch (error) {
-        result.innerHTML = `<p class='info' style='color:red'>Erreur : ${error.message}</p>`;
-      }
-    }
+    getWeather();
   </script>
 </body>
 </html>
