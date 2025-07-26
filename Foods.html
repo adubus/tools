@@ -105,7 +105,6 @@
               const street = el.tags["addr:street"] || "";
               const number = el.tags["addr:housenumber"] || "";
               const phone = el.tags["phone"] || "Non renseigné";
-              const rating = el.tags["rating"] || "–";
               const latCoord = el.lat?.toFixed(5) || el.center?.lat.toFixed(5);
               const lonCoord = el.lon?.toFixed(5) || el.center?.lon.toFixed(5);
               const itineraireURL = `gps.html?toLat=${latitude}&toLon=${longitude}`;
