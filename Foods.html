@@ -9,10 +9,12 @@
     body { font-family: sans-serif; padding: 20px; }
     input, select, button { margin: 5px 0; padding: 6px; font-size: 16px; }
     #map { height: 500px; margin-top: 15px; display: none; }
-    ul { list-style: none; padding: 0; }
-    li { margin-bottom: 10px; }
+    ul, #places-list { list-style: none; padding: 0; }
+    li, .place-card { margin-bottom: 15px; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
+    .button { display: inline-block; margin-top: 5px; padding: 5px 10px; background: #4CAF50; color: white; text-decoration: none; border-radius: 4px; }
+    .button:hover { background: #45a049; }
   </style>
-    <link rel="stylesheet" href="style.css" />  
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <button onclick="window.location.href='index.html'">Retour à la page d'accueil</button>
@@ -29,7 +31,7 @@
       <option value="cafe">Café</option>
       <option value="bar">Bar</option>
       <option value="ice_cream">Glacier</option>
-          <option value="pharmacy">Pharmacie</option>
+      <option value="pharmacy">Pharmacie</option>
     </optgroup>
     <optgroup label="🏛️ Culture & Tourisme">
       <option value="museum">Musée</option>
@@ -37,14 +39,13 @@
       <option value="cinema">Cinéma</option>
     </optgroup>
     <optgroup label="🏞️ Services">
-<option value="parking">Parking</option>
-    <option value="fuel">Station-service</option>
-    <option value="atm">Distributeur automatique</option>
-    <option value="bank">Banque</option>
-    <option value="post_office">Bureau de poste</option>
-    <option value="toilets">Toilettes publiques</option>
-    <option value="charging_station">Borne de recharge électrique</option>
-
+      <option value="parking">Parking</option>
+      <option value="fuel">Station-service</option>
+      <option value="atm">Distributeur automatique</option>
+      <option value="bank">Banque</option>
+      <option value="post_office">Bureau de poste</option>
+      <option value="toilets">Toilettes publiques</option>
+      <option value="charging_station">Borne de recharge électrique</option>
     </optgroup>
   </select><br />
 
@@ -52,107 +53,126 @@
   <button onclick="rechercherLieux('carte')">🗺️ Afficher sur la carte</button>
 
   <div id="resultat"></div>
+  <div id="places-list"></div>
   <div id="map"></div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    async function rechercherLieux(mode) {
-  const villeInput = document.getElementById("ville").value.trim();
-  const cat = document.getElementById("categorie").value;
-  const resultat = document.getElementById("resultat");
-  const mapDiv = document.getElementById("map");
-  resultat.innerHTML = "Chargement…";
-  mapDiv.style.display = "none";
+    const reverseGeocodeCache = {};
 
-  let lat, lon, villeLabel = villeInput;
-
-  try {
-    if (villeInput) {
-      const geo = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(villeInput)}`).then(r => r.json());
-      if (!geo.length) throw new Error("Ville introuvable");
-      lat = geo[0].lat;
-      lon = geo[0].lon;
-    } else {
-      const position = await new Promise((resolve, reject) =>
-        navigator.geolocation.getCurrentPosition(resolve, reject));
-      lat = position.coords.latitude;
-      lon = position.coords.longitude;
-
-      // 🎯 Reverse geocoding pour avoir un nom de ville
-      const reverse = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`).then(r => r.json());
-      villeLabel = reverse.address.city || reverse.address.town || reverse.address.village || "votre position";
+    async function getAddressFromCoords(lat, lon) {
+      const key = `${lat.toFixed(5)},${lon.toFixed(5)}`;
+      if (reverseGeocodeCache[key]) {
+        return reverseGeocodeCache[key];
+      }
+      try {
+        const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`;
+        const response = await fetch(url);
+        const data = await response.json();
+        const address = data.display_name || "Adresse non disponible";
+        reverseGeocodeCache[key] = address;
+        // Pause 1s pour limiter la fréquence des requêtes
+        await new Promise(r => setTimeout(r, 1000));
+        return address;
+      } catch {
+        return "Adresse non disponible";
+      }
     }
 
-    // Requête Overpass API
-    const radius = 3000;
-    const query = `
-      [out:json];
-      (
-        node["amenity"="${cat}"](around:${radius},${lat},${lon});
-        way["amenity"="${cat}"](around:${radius},${lat},${lon});
-        relation["amenity"="${cat}"](around:${radius},${lat},${lon});
-      );
-      out center;`;
+    async function renderPlaces(places) {
+      const container = document.getElementById("places-list");
+      container.innerHTML = "";
+      const limitedPlaces = places.slice(0, 15); // max 15 lieux
 
-    const overpassURL = "https://overpass-api.de/api/interpreter?data=" + encodeURIComponent(query);
-    const data = await fetch(overpassURL).then(r => r.json());
+      for (const el of limitedPlaces) {
+        const name = el.tags.name || "(Nom inconnu)";
+        const lat = el.lat || el.center?.lat;
+        const lon = el.lon || el.center?.lon;
+        const phone = el.tags.phone || "";
+        let address = "";
+        const street = el.tags["addr:street"] || "";
+        const number = el.tags["addr:housenumber"] || "";
 
-    if (!data.elements.length) {
-      resultat.innerHTML = "Aucun lieu trouvé.";
-      return;
-    }
-
-    if (mode === "liste") {
-      mapDiv.style.display = "none";
-      resultat.innerHTML = `<h2>📍 Résultats autour de ${villeLabel} :</h2><ul>` +
-        data.elements.map(el => {
-          const name = el.tags.name || "Sans nom";
-          const street = el.tags["addr:street"] || "";
-          const number = el.tags["addr:housenumber"] || "";
-          const phone = el.tags["phone"];
-          const phoneHTML = phone ? `Téléphone : <a href="tel:${phone}">${phone}</a><br/>` : "";
-          const latCoord = el.lat?.toFixed(5) || el.center?.lat.toFixed(5);
-          const lonCoord = el.lon?.toFixed(5) || el.center?.lon.toFixed(5);
-          const itineraireURL = `gps.html?toLat=${latCoord}&toLon=${lonCoord}`;
-
-          return `
-            <li>
-              <strong>${name}</strong><br/>
-              Type : ${cat}<br/>
-              Adresse : ${street} ${number}<br/>
-              ${phoneHTML}
-              <a href="${itineraireURL}" class="button">🧭 Itinéraire</a>
-            </li>
-          `;
-        }).join("") + "</ul>";
-    } else {
-      resultat.innerHTML = "";
-      mapDiv.style.display = "block";
-      mapDiv.innerHTML = "";
-
-      const map = L.map("map").setView([lat, lon], 15);
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: '&copy; OpenStreetMap'
-      }).addTo(map);
-
-      data.elements.forEach(el => {
-        const name = el.tags.name || "Sans nom";
-        const latitude = el.lat || el.center?.lat;
-        const longitude = el.lon || el.center?.lon;
-        if (latitude && longitude) {
-          L.marker([latitude, longitude])
-            .addTo(map)
-            .bindPopup(`<strong>${name}</strong><br/>Type : ${cat}`);
+        if (street || number) {
+          address = `${street} ${number}`.trim();
+        } else if(lat && lon) {
+          address = await getAddressFromCoords(lat, lon);
+        } else {
+          address = "Adresse non disponible";
         }
-      });
+
+        const itineraireURL = `gps.html?toLat=${lat}&toLon=${lon}`;
+        const phoneLink = phone ? `<a href="tel:${phone}">📞 ${phone}</a><br/>` : "";
+
+        const placeHTML = `
+          <div class="place-card">
+            <h3>${name}</h3>
+            <p>
+              ${phoneLink}
+              📍 ${address}<br/>
+              <a class="button" href="${itineraireURL}">🧭 Itinéraire</a>
+            </p>
+          </div>
+        `;
+        container.insertAdjacentHTML("beforeend", placeHTML);
+      }
     }
-  } catch (e) {
-    resultat.innerHTML = `<span style="color:red">Erreur : ${e.message}</span>`;
-    console.error(e);
-  }
-}
 
+    async function rechercherLieux(mode) {
+      const villeInput = document.getElementById("ville").value.trim();
+      const cat = document.getElementById("categorie").value;
+      const resultat = document.getElementById("resultat");
+      const mapDiv = document.getElementById("map");
+      const placesList = document.getElementById("places-list");
+      resultat.innerHTML = "Chargement…";
+      mapDiv.style.display = "none";
+      placesList.innerHTML = "";
 
-  </script>
-</body>
-</html>
+      let lat, lon, villeLabel = villeInput;
+
+      try {
+        if (villeInput) {
+          const geo = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(villeInput)}`).then(r => r.json());
+          if (!geo.length) throw new Error("Ville introuvable");
+          lat = geo[0].lat;
+          lon = geo[0].lon;
+        } else {
+          const position = await new Promise((resolve, reject) =>
+            navigator.geolocation.getCurrentPosition(resolve, reject));
+          lat = position.coords.latitude;
+          lon = position.coords.longitude;
+
+          const reverse = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`).then(r => r.json());
+          villeLabel = reverse.address.city || reverse.address.town || reverse.address.village || "votre position";
+        }
+
+        const radius = 3000;
+        const query = `
+          [out:json];
+          (
+            node["amenity"="${cat}"](around:${radius},${lat},${lon});
+            way["amenity"="${cat}"](around:${radius},${lat},${lon});
+            relation["amenity"="${cat}"](around:${radius},${lat},${lon});
+          );
+          out center;`;
+
+        const overpassURL = "https://overpass-api.de/api/interpreter?data=" + encodeURIComponent(query);
+        const data = await fetch(overpassURL).then(r => r.json());
+
+        if (!data.elements.length) {
+          resultat.innerHTML = "Aucun lieu trouvé.";
+          return;
+        }
+
+        if (mode === "liste") {
+          mapDiv.style.display = "none";
+          resultat.innerHTML = `<h2>📍 Résultats autour de ${villeLabel} :</h2>`;
+          await renderPlaces(data.elements);
+        } else {
+          placesList.innerHTML = "";
+          resultat.innerHTML = "";
+          mapDiv.style.display = "block";
+          mapDiv.innerHTML = "";
+
+          const map = L.map("map").setView([lat, lon], 15);
+          L.tileLayer("https://{s}.tile.openstreetmap.
