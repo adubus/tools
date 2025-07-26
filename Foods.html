@@ -100,14 +100,26 @@
         if (mode === "liste") {
           mapDiv.style.display = "none";
           resultat.innerHTML = `<h2>📍 Résultats autour de ${ville || "votre position"} :</h2><ul>` +
-            data.elements.map(el => `
-              <li>
-                <strong>${el.tags.name || "Sans nom"}</strong><br/>
-                Type : ${cat}<br/>
-                ${el.tags["addr:street"] || ""} ${el.tags["addr:housenumber"] || ""}<br/>
-                (${el.lat?.toFixed(5) || el.center?.lat.toFixed(5)}, ${el.lon?.toFixed(5) || el.center?.lon.toFixed(5)})
-              </li>
-            `).join("") + "</ul>";
+            data.elements.map(el => {
+              const name = el.tags.name || "Sans nom";
+              const street = el.tags["addr:street"] || "";
+              const number = el.tags["addr:housenumber"] || "";
+              const phone = el.tags["phone"] || "Non renseigné";
+              const rating = el.tags["rating"] || "–";
+              const latCoord = el.lat?.toFixed(5) || el.center?.lat.toFixed(5);
+              const lonCoord = el.lon?.toFixed(5) || el.center?.lon.toFixed(5);
+        
+              return `
+                <li>
+                  <strong>${name}</strong><br/>
+                  Type : ${cat}<br/>
+                  Adresse : ${street} ${number}<br/>
+                  Téléphone : ${phone}<br/>
+                  Note : ${rating} ⭐<br/>
+                  Coordonnées : (${latCoord}, ${lonCoord})
+                </li>
+              `;
+            }).join("") + "</ul>";
         } else {
           resultat.innerHTML = "";
           mapDiv.style.display = "block";
