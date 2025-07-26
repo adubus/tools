@@ -12,7 +12,6 @@
     ul { list-style: none; padding: 0; }
     li { margin-bottom: 10px; }
   </style>
-    <link rel="stylesheet" href="style.css" />  
 </head>
 <body>
 
@@ -89,4 +88,51 @@
           );
           out center;`;
 
-        const overpassUR
+        const overpassURL = "https://overpass-api.de/api/interpreter?data=" + encodeURIComponent(query);
+        const data = await fetch(overpassURL).then(r => r.json());
+
+        if (!data.elements.length) {
+          resultat.innerHTML = "Aucun lieu trouvé.";
+          return;
+        }
+
+        if (mode === "liste") {
+          mapDiv.style.display = "none";
+          resultat.innerHTML = `<h2>📍 Résultats autour de ${ville || "votre position"} :</h2><ul>` +
+            data.elements.map(el => `
+              <li>
+                <strong>${el.tags.name || "Sans nom"}</strong><br/>
+                Type : ${cat}<br/>
+                ${el.tags["addr:street"] || ""} ${el.tags["addr:housenumber"] || ""}<br/>
+                (${el.lat?.toFixed(5) || el.center?.lat.toFixed(5)}, ${el.lon?.toFixed(5) || el.center?.lon.toFixed(5)})
+              </li>
+            `).join("") + "</ul>";
+        } else {
+          resultat.innerHTML = "";
+          mapDiv.style.display = "block";
+          mapDiv.innerHTML = "";
+
+          const map = L.map("map").setView([lat, lon], 15);
+          L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution: '&copy; OpenStreetMap'
+          }).addTo(map);
+
+          data.elements.forEach(el => {
+            const name = el.tags.name || "Sans nom";
+            const latitude = el.lat || el.center?.lat;
+            const longitude = el.lon || el.center?.lon;
+            if (latitude && longitude) {
+              L.marker([latitude, longitude])
+                .addTo(map)
+                .bindPopup(`<strong>${name}</strong><br/>Type : ${cat}`);
+            }
+          });
+        }
+      } catch (e) {
+        resultat.innerHTML = `<span style="color:red">Erreur : ${e.message}</span>`;
+        console.error(e);
+      }
+    }
+  </script>
+</body>
+</html>
