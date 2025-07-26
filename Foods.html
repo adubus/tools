@@ -108,15 +108,14 @@
               const rating = el.tags["rating"] || "–";
               const latCoord = el.lat?.toFixed(5) || el.center?.lat.toFixed(5);
               const lonCoord = el.lon?.toFixed(5) || el.center?.lon.toFixed(5);
-        
+              const itineraireURL = `gps.html?toLat=${latitude}&toLon=${longitude}`;
               return `
                 <li>
                   <strong>${name}</strong><br/>
                   Type : ${cat}<br/>
                   Adresse : ${street} ${number}<br/>
                   Téléphone : ${phone}<br/>
-                  Note : ${rating} ⭐<br/>
-                  Coordonnées : (${latCoord}, ${lonCoord})
+                  <a href="${itineraireURL}" class="button">🧭 Itinéraire</a>
                 </li>
               `;
             }).join("") + "</ul>";
