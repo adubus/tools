@@ -79,44 +79,49 @@
       }
     }
 
-    async function renderPlaces(places) {
-      const container = document.getElementById("places-list");
-      container.innerHTML = "";
-      const limitedPlaces = places.slice(0, 15); // max 15 lieux
+function capitalizeFirst(str) {
+  if (!str) return "";
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
 
-      for (const el of limitedPlaces) {
-        const name = el.tags.name || "(Nom inconnu)";
-        const lat = el.lat || el.center?.lat;
-        const lon = el.lon || el.center?.lon;
-        const phone = el.tags.phone || "";
-        let address = "";
-        const street = el.tags["addr:street"] || "";
-        const number = el.tags["addr:housenumber"] || "";
+async function renderPlaces(places) {
+  const container = document.getElementById("places-list");
+  container.innerHTML = "";
+  const limitedPlaces = places.slice(0, 15);
 
-        if (street || number) {
-          address = `${street} ${number}`.trim();
-        } else if(lat && lon) {
-          address = await getAddressFromCoords(lat, lon);
-        } else {
-          address = "Adresse non disponible";
-        }
+  for (const el of limitedPlaces) {
+    const name = el.tags.name || capitalizeFirst(el.tags.amenity) || "(Nom inconnu)";
+    const lat = el.lat || el.center?.lat;
+    const lon = el.lon || el.center?.lon;
+    const phone = el.tags.phone || "";
+    let address = "";
+    const street = el.tags["addr:street"] || "";
+    const number = el.tags["addr:housenumber"] || "";
 
-        const itineraireURL = `gps.html?toLat=${lat}&toLon=${lon}`;
-        const phoneLink = phone ? `<a href="tel:${phone}">📞 ${phone}</a><br/>` : "";
-
-        const placeHTML = `
-          <div class="place-card">
-            <h3>${name}</h3>
-            <p>
-              ${phoneLink}
-              📍 ${address}<br/>
-              <a class="button" href="${itineraireURL}">🧭 Itinéraire</a>
-            </p>
-          </div>
-        `;
-        container.insertAdjacentHTML("beforeend", placeHTML);
-      }
+    if (street || number) {
+      address = `${street} ${number}`.trim();
+    } else if(lat && lon) {
+      address = await getAddressFromCoords(lat, lon);
+    } else {
+      address = "Adresse non disponible";
     }
+
+    const itineraireURL = `gps.html?toLat=${lat}&toLon=${lon}`;
+    const phoneLink = phone ? `<a href="tel:${phone}">📞 ${phone}</a><br/>` : "";
+
+    const placeHTML = `
+      <div class="place-card">
+        <h3>${name}</h3>
+        <p>
+          ${phoneLink}
+          📍 ${address}<br/>
+          <a class="button" href="${itineraireURL}">🧭 Itinéraire</a>
+        </p>
+      </div>
+    `;
+    container.insertAdjacentHTML("beforeend", placeHTML);
+  }
+}
 
     async function rechercherLieux(mode) {
       const villeInput = document.getElementById("ville").value.trim();
