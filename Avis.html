@@ -14,5 +14,33 @@
     <label>Message :<br><textarea name="message" rows="5" cols="40" required></textarea></label><br><br>
     <button type="submit">Envoyer</button>
   </form>
+<h2>Les derniers avis</h2>
+<div id="liste-avis">Chargement des avis...</div>
+
+<script>
+  fetch("https://dubus.free.fr/lire_avis.php")
+    .then(response => response.json())
+    .then(data => {
+      const container = document.getElementById("liste-avis");
+      if (data.length === 0) {
+        container.innerHTML = "<p>Aucun avis pour le moment.</p>";
+        return;
+      }
+      const html = data.map(avis => `
+        <div style="border:1px solid #ccc; margin:10px 0; padding:10px;">
+          <strong>${avis.nom}</strong><br>
+          <em>${new Date(avis.date).toLocaleString()}</em><br>
+          <p>${avis.message.replace(/\n/g, "<br>")}</p>
+        </div>
+      `).join("");
+      container.innerHTML = html;
+    })
+    .catch(error => {
+      document.getElementById("liste-avis").innerHTML = "Erreur lors du chargement des avis.";
+      console.error(error);
+    });
+</script>
+
+  
 </body>
 </html>
