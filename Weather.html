@@ -121,7 +121,7 @@
         const sunset = new Date(data.sys.sunset * 1000).toLocaleTimeString("fr-FR", options);
 const windInfoHTML = `
   <i class="wi wi-wind-beaufort-${beaufort}" style="font-size: 1.5em; color: #FFA500;"></i>
-  <i class="wi wi-wind towards-${windDeg}-deg" style="font-size: 2em; color: #007BFF;"></i>
+  <i class="wi wi-wind towards-${windDeg}-deg" style="font-size: 1.5em; color: #FFA500;"></i>
 `;
         const directions = ["Nord", "Nord-Est", "Est", "Sud-Est", "Sud", "Sud-Ouest", "Ouest", "Nord-Ouest"];
         const windDir = directions[Math.round(windDeg / 45) % 8];
