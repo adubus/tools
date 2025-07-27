@@ -17,7 +17,7 @@
 <div id="avisList"><em>Chargement des avis...</em></div>
 
 <script>
-fetch("http://dubus.free.fr/lire_avis.php")
+fetch("/api/lire_avis")
   .then(response => response.json())
   .then(data => {
     const container = document.getElementById("avisList");
