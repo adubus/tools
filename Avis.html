@@ -9,14 +9,58 @@
 <body>
     <button onclick="window.location.href='index.html'">Retour à la page d'accueil</button>
   <h1>Laissez votre avis</h1>
-  <form action="/api/avis" method="POST">
-    <label>Nom : <input type="text" name="nom" required></label><br><br>
-    <label>Message :<br><textarea name="message" rows="5" cols="40" required></textarea></label><br><br>
-    <button type="submit">Envoyer</button>
-  </form>
+<form id="avisForm">
+  <label>Nom : <input type="text" name="nom" required></label><br><br>
+  <label>Message :<br><textarea name="message" rows="5" cols="40" required></textarea></label><br><br>
+  <button type="submit">Envoyer</button>
+</form>
+
+
+
+  
 <div id="avisList"><em>Chargement des avis...</em></div>
 
 <script>
+document.getElementById('avisForm').addEventListener('submit', async function (e) {
+  e.preventDefault(); // empêche le rechargement de la page
+
+  const form = e.target;
+  const formData = new FormData(form);
+  const data = {};
+  formData.forEach((value, key) => {
+    data[key] = value;
+  });
+
+  try {
+    const response = await fetch('/api/avis', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    });
+
+    if (response.ok) {
+      alert("Merci pour votre avis !");
+      form.reset(); // Vide le formulaire
+
+      // Optionnel : rafraîchir les avis affichés
+      if (typeof chargerAvis === "function") {
+        chargerAvis();
+      }
+
+    } else {
+      alert("Une erreur s'est produite lors de l'envoi.");
+    }
+  } catch (error) {
+    alert("Erreur réseau ou serveur.");
+    console.error(error);
+  }
+});
+
+
+
+  
 fetch("/api/lire_avis")
   .then(response => response.json())
   .then(data => {
@@ -35,6 +79,10 @@ fetch("/api/lire_avis")
     document.getElementById("avisList").innerHTML = "Impossible de charger les avis.";
     console.error(error);
   });
+
+
+
+  
 </script>
 
   
