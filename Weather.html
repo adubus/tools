@@ -116,8 +116,9 @@
         const beaufort = windSpeedToBeaufort(windSpeed);
         const windDeg = data.wind.deg;
         const cloudiness = data.clouds.all;
-        const sunrise = new Date(data.sys.sunrise * 1000).toLocaleTimeString("fr-FR");
-        const sunset = new Date(data.sys.sunset * 1000).toLocaleTimeString("fr-FR");
+        const options = { hour: '2-digit', minute: '2-digit' };
+        const sunrise = new Date(data.sys.sunrise * 1000).toLocaleTimeString("fr-FR", options);
+        const sunset = new Date(data.sys.sunset * 1000).toLocaleTimeString("fr-FR", options);
 const windInfoHTML = `
   <i class="wi wi-wind-beaufort-${beaufort}" style="font-size: 1.5em; color: #FFA500;"></i>
   
