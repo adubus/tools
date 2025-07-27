@@ -2,11 +2,12 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css" /> 
   <title>Laissez votre avis</title>
 </head>
 <body>
   <h1>Laissez votre avis</h1>
-  <form action="https://dubus.free.fr/enregistrer_avis.php" method="POST">
+  <form action="/api/avis" method="POST">
     <label>Nom : <input type="text" name="nom" required></label><br><br>
     <label>Message :<br><textarea name="message" rows="5" cols="40" required></textarea></label><br><br>
     <button type="submit">Envoyer</button>
