@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Météo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.10/css/weather-icons.min.css">
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      background: #eef3f9;
+      color: #333;
+    }
+    .info {
+      margin: 10px 0;
+      font-size: 1.2em;
+    }
+    .weather-icon {
+      margin-right: 10px;
+      transition: color 0.4s ease;
+    }
+    .forecast-day {
+      margin-top: 20px;
+      padding: 10px;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Météo</h1>
+  <div id="current-weather"></div>
+  <h2>Prévisions sur 5 jours</h2>
+  <div id="forecast"></div>
+
+  <script>
+    const API_KEY = "TA_CLE_API_OPENWEATHERMAP";
+    const CITY = "Paris";
+
+    function hslColorFromCloudiness(percent) {
+      const hue = (240 * percent) / 100; // 0 = rouge, 240 = bleu
+      return `hsl(${hue}, 100%, 50%)`;
+    }
+
+    async function getWeather() {
+      const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${CITY}&appid=${API_KEY}&units=metric&lang=fr`);
+      const data = await res.json();
+
+      const temperature = data.main.temp.toFixed(1);
+      const tempMin = data.main.temp_min.toFixed(1);
+      const tempMax = data.main.temp_max.toFixed(1);
+      const windDir = data.wind.deg + "°";
+      const humidity = data.main.humidity;
+      const pressure = data.main.pressure;
+      const cloudiness = data.clouds.all;
+      const sunrise = new Date(data.sys.sunrise * 1000).toLocaleTimeString("fr-FR", {hour: '2-digit', minute: '2-digit'});
+      const sunset = new Date(data.sys.sunset * 1000).toLocaleTimeString("fr-FR", {hour: '2-digit', minute: '2-digit'});
+
+      const iconColor = hslColorFromCloudiness(cloudiness);
+
+      document.getElementById("current-weather").innerHTML = `
+        <div class="info"><i class="wi wi-thermometer-internal weather-icon"></i> ${temperature} °C</div>
+        <div class="info"><i class="wi wi-thermometer-exterior weather-icon"></i> ${tempMin} °C &nbsp;&nbsp; <i class="wi wi-thermometer weather-icon"></i> ${tempMax} °C</div>
+        <div class="info"><i class="wi wi-strong-wind weather-icon"></i> ${windDir}</div>
+        <div class="info"><i class="wi wi-humidity weather-icon"></i> ${humidity}%</div>
+        <div class="info"><i class="wi wi-barometer weather-icon"></i> ${pressure} hPa</div>
+        <div class="info"><i class="wi wi-cloud weather-icon"></i> ${cloudiness}%</div>
+        <div class="info"><i class="wi wi-sunrise weather-icon"></i> ${sunrise}</div>
+        <div class="info"><i class="wi wi-sunset weather-icon"></i> ${sunset}</div>
+      `;
+
+      document.querySelectorAll(".weather-icon").forEach(icon => {
+        icon.style.color = iconColor;
+      });
+    }
+
+    async function getForecast() {
+      const res = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${CITY}&appid=${API_KEY}&units=metric&lang=fr`);
+      const data = await res.json();
+
+      const groupedByDay = {};
+
+      data.list.forEach(item => {
+        const date = item.dt_txt.split(" ")[0];
+        if (!groupedByDay[date]) groupedByDay[date] = [];
+        groupedByDay[date].push(item);
+      });
+
+      let html = "";
+
+      for (const [date, dayItems] of Object.entries(groupedByDay).slice(0, 5)) {
+        const tempAvg = (dayItems.reduce((sum, i) => sum + i.main.temp, 0) / dayItems.length).toFixed(1);
+        const nebulositeMoy = dayItems.reduce((acc, i) => acc + i.clouds.all, 0) / dayItems.length;
+        const iconColor = hslColorFromCloudiness(nebulositeMoy);
+
+        html += `
+          <div class="forecast-day">
+            <h3>${new Date(date).toLocaleDateString("fr-FR", { weekday: 'long', day: 'numeric', month: 'long' })}</h3>
+            <p><i class="wi wi-thermometer weather-icon" style="color: ${iconColor}"></i> ${tempAvg} °C</p>
+            <p><i class="wi wi-cloud weather-icon" style="color: ${iconColor}"></i> ${nebulositeMoy.toFixed(0)}%</p>
+          </div>
+        `;
+      }
+
+      document.getElementById("forecast").innerHTML = html;
+    }
+
+    getWeather();
+    getForecast();
+  </script>
+</body>
+</html>
