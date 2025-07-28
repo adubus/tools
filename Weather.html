@@ -65,6 +65,21 @@
   <div id="result"></div>
 
   <script>
+    function hslColorFromCloudiness(percent) {
+  const hue = (240 * percent) / 100; // 0 (rouge) → 240 (bleu)
+  return `hsl(${hue}, 100%, 50%)`;
+}
+
+const cloudiness = data.clouds.all;
+const iconColor = hslColorFromCloudiness(cloudiness);
+
+// Appliquer la couleur à toutes les icônes météo
+document.querySelectorAll('.weather-icon').forEach(icon => {
+  icon.style.color = iconColor;
+});
+
+// Affichage texte du % de nébulosité
+document.getElementById("cloudiness-text").textContent = `${cloudiness}%`;
     function getIconHTML(iconCode) {
       const iconClass = `wi wi-owm-${iconCode}`;
       return `<i class="${iconClass} icon"></i>`;
