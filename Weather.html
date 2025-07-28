@@ -195,7 +195,7 @@ const windInfoHTML = `
         });
 
         let html = `<h2>Météo sur 5 jours pour ${data.city.name}</h2>`;
-        or (const date in forecastByDay) {
+        for (const date in forecastByDay) {
   const dayItems = forecastByDay[date];
   const tempMin = Math.min(...dayItems.map(i => i.main.temp_min));
   const tempMax = Math.max(...dayItems.map(i => i.main.temp_max));
