@@ -27,6 +27,8 @@
     }
 
   .wi {
+    width: 30px; /* fixe la largeur de l’icône pour tout aligner */
+    text-align: center;
     font-size: 1.5em;
     margin-right: 0.5em;
     color: #FFA500;
@@ -195,7 +197,7 @@ const windInfoHTML = `
           forecastByDay[date].push(item);
         });
 
-        let html = `<h2>Météo de ${data.city.name}</h2>`;
+        let html = `<h2>${data.city.name}</h2>`;
         for (const date in forecastByDay) {
   const dayItems = forecastByDay[date];
   const tempMin = Math.min(...dayItems.map(i => i.main.temp_min));
