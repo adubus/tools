@@ -238,7 +238,7 @@ const windInfoHTML = `
       <p><strong>${mainDesc}</strong></p>
       <p>🌡️ Min: ${tempMin.toFixed(1)} °C &nbsp;&nbsp; Max: ${tempMax.toFixed(1)} °C</p>
       <p>💧 Humidité moyenne : ${humiditeMoy.toFixed(0)}%</p>
-      <p>☁️ Nébulosité moyenne : ${nebulositeMoy.toFixed(0)}%</p>
+      <p><i class="wi wi-humidity"></i> ${nebulositeMoy.toFixed(0)}%</p>
       <p>🌬️ Vent : ${ventMoy.toFixed(1)} m/s (${windDir}) <i class="wi wi-wind-beaufort-${beaufort}"></i> <i class="wi wi-wind towards-${Math.round(avgDeg)}-deg"></i></p>
       <p>🧭 Pression : ${pressionMoy.toFixed(0)} hPa ${symbolePression}</p>
     </div>
