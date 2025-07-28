@@ -213,6 +213,14 @@ const windInfoHTML = `
         });
 
         let html = `<h2>${data.city.name}</h2>`;
+        const options = { hour: '2-digit', minute: '2-digit' };
+const sunrise = new Date(data.city.sunrise * 1000).toLocaleTimeString("fr-FR", options);
+const sunset = new Date(data.city.sunset * 1000).toLocaleTimeString("fr-FR", options);
+
+html += `
+  <p><i class="wi wi-sunrise"></i> ${sunrise}</p>
+  <p><i class="wi wi-sunset"></i> ${sunset}</p>
+`;
         for (const date in forecastByDay) {
   const dayItems = forecastByDay[date];
   const tempMin = Math.min(...dayItems.map(i => i.main.temp_min));
@@ -259,8 +267,7 @@ const windInfoHTML = `
       <p><i class="wi wi-cloud weather-icon"></i> ${nebulositeMoy.toFixed(0)}%</p>
       <p><i class="wi wi-wind-beaufort-${beaufort}"></i> <i class="wi wi-wind towards-${Math.round(avgDeg)}-deg"></i></p>
       <p><i class="wi wi-barometer"></i>  ${pressionMoy.toFixed(0)} hPa ${symbolePression}</p>
-<p><i class="wi wi-sunrise"></i> ${sunrise}.toFixed(0)</p>
-          <p><i class="wi wi-sunset"></i> ${sunset}.toFixed(0)</p>
+
            </div>
   `;
 }
