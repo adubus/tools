@@ -236,9 +236,9 @@ const windInfoHTML = `
       <h3>${dateFr}</h3>
       ${getIconHTML(iconId)}
       <p><strong>${mainDesc}</strong></p>
-      <p>🌡️ Min: ${tempMin.toFixed(1)} °C &nbsp;&nbsp; Max: ${tempMax.toFixed(1)} °C</p>
+      <p><i class="wi wi-thermometer-exterior"></i>  ${tempMin.toFixed(1)} °C &nbsp;&nbsp; <i class="wi wi-thermometer"></i> ${tempMax.toFixed(1)} °C</p>
       <p><i class="wi wi-humidity"></i>  ${humiditeMoy.toFixed(0)}%</p>
-      <p><i class="wi wi-humidity"></i> ${nebulositeMoy.toFixed(0)}%</p>
+      <p><i class="wi wi-cloud"></i> ${nebulositeMoy.toFixed(0)}%</p>
       <p><i class="wi wi-wind-beaufort-${beaufort}"></i> <i class="wi wi-wind towards-${Math.round(avgDeg)}-deg"></i></p>
       <p><i class="wi wi-barometer"></i>  ${pressionMoy.toFixed(0)} hPa ${symbolePression}</p>
     </div>
