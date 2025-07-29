@@ -193,14 +193,15 @@ const key = select.selectedOptions[0].dataset.key || "amenity";
         }
 
         const radius = 3000;
-        const query = `
-          [out:json];
-          (
-            node["amenity"="${cat}"](around:${radius},${lat},${lon});
-            way["amenity"="${cat}"](around:${radius},${lat},${lon});
-            relation["amenity"="${cat}"](around:${radius},${lat},${lon});
-          );
-          out center;`;
+      const query = `
+  [out:json];
+  (
+    node["${key}"="${cat}"](around:${radius},${lat},${lon});
+    way["${key}"="${cat}"](around:${radius},${lat},${lon});
+    relation["${key}"="${cat}"](around:${radius},${lat},${lon});
+  );
+  out center;
+`;
 
         const overpassURL = "https://overpass-api.de/api/interpreter?data=" + encodeURIComponent(query);
         const data = await fetch(overpassURL).then(r => r.json());
