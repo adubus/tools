@@ -164,7 +164,9 @@ END:VCARD`;
 
     async function rechercherLieux(mode) {
       const villeInput = document.getElementById("ville").value.trim();
-      const cat = document.getElementById("categorie").value;
+      const select = document.getElementById("categorie");
+const cat = select.value;
+const key = select.selectedOptions[0].dataset.key || "amenity";
       const resultat = document.getElementById("resultat");
       const mapDiv = document.getElementById("map");
       const placesList = document.getElementById("places-list");
