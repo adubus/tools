@@ -25,55 +25,80 @@
 
 
   <label for="categorie">Catégorie :</label><br />
-<select id="categorie">
-  <optgroup label="🍴 Alimentation / Boissons">
-    <option value="restaurant" data-key="amenity">Restaurant</option>
-    <option value="fast_food" data-key="amenity">Restauration rapide</option>
-    <option value="cafe" data-key="amenity">Café</option>
-    <option value="bar" data-key="amenity">Bar</option>
-    <option value="ice_cream" data-key="amenity">Glacier</option>
+<select id="categorie" data-key="amenity">
+  <optgroup label="🍴 Alimentation & Boissons">
+    <option value="restaurant">Restaurant</option>
+    <option value="fast_food">Restauration rapide</option>
+    <option value="cafe">Café</option>
+    <option value="bar">Bar</option>
+    <option value="ice_cream">Glacier</option>
   </optgroup>
 
-  <optgroup label="🛒 Commerces">
-    <option value="supermarket" data-key="shop">Supermarché</option>
-    <option value="bakery" data-key="shop">Boulangerie</option>
-    <option value="butcher" data-key="shop">Boucherie</option>
-    <option value="convenience" data-key="shop">Épicerie</option>
+  <optgroup label="🛍️ Commerces de proximité">
+    <option value="bakery">Boulangerie</option>
+    <option value="butcher">Boucherie</option>
+    <option value="supermarket">Supermarché</option>
+    <option value="convenience">Épicerie</option>
+    <option value="greengrocer">Primeur</option>
+    <option value="marketplace">Marché</option>
   </optgroup>
 
-  <optgroup label="🚰 Eau & Santé">
-    <option value="drinking_water" data-key="amenity">Eau potable</option>
-    <option value="pharmacy" data-key="amenity">Pharmacie</option>
-    <option value="hospital" data-key="amenity">Hôpital</option>
-  </optgroup>
-
-  <optgroup label="🏛️ Culture & Tourisme">
-    <option value="museum" data-key="tourism">Musée</option>
-    <option value="theatre" data-key="amenity">Théâtre</option>
-    <option value="cinema" data-key="amenity">Cinéma</option>
-    <option value="attraction" data-key="tourism">Attraction touristique</option>
-    <option value="viewpoint" data-key="tourism">Point de vue</option>
+  <optgroup label="🏨 Hébergements (tourism)">
     <option value="hotel" data-key="tourism">Hôtel</option>
-    <option value="hostel" data-key="tourism">Auberge</option>
+    <option value="guest_house" data-key="tourism">Chambre d’hôte</option>
+    <option value="hostel" data-key="tourism">Auberge de jeunesse</option>
     <option value="camp_site" data-key="tourism">Camping</option>
+    <option value="motel" data-key="tourism">Motel</option>
+    <option value="alpine_hut" data-key="tourism">Refuge de montagne</option>
   </optgroup>
 
-  <optgroup label="🏞️ Nature & Loisirs">
+  <optgroup label="🏛️ Culture & Loisirs">
+    <option value="museum" data-key="tourism">Musée</option>
+    <option value="cinema" data-key="amenity">Cinéma</option>
+    <option value="theatre" data-key="amenity">Théâtre</option>
+    <option value="library" data-key="amenity">Bibliothèque</option>
+    <option value="arts_centre" data-key="amenity">Centre culturel</option>
+  </optgroup>
+
+  <optgroup label="⛪ Monuments & Culte">
+    <option value="place_of_worship" data-key="amenity">Église / Lieu de culte</option>
+    <option value="monument" data-key="historic">Monument</option>
+    <option value="memorial" data-key="historic">Mémorial</option>
+  </optgroup>
+
+  <optgroup label="🚗 Mobilité & Transports">
+    <option value="parking">Parking</option>
+    <option value="fuel">Station-service</option>
+    <option value="charging_station">Borne électrique</option>
+    <option value="bus_station">Gare routière</option>
+    <option value="bicycle_parking">Parking vélo</option>
+    <option value="taxi">Station de taxi</option>
+    <option value="car_rental">Location de voiture</option>
+  </optgroup>
+
+  <optgroup label="🚻 Services publics & santé">
+    <option value="pharmacy">Pharmacie</option>
+    <option value="hospital">Hôpital</option>
+    <option value="clinic">Clinique</option>
+    <option value="doctor">Médecin</option>
+    <option value="police">Police</option>
+    <option value="post_office">Bureau de poste</option>
+    <option value="bank">Banque</option>
+    <option value="atm">Distributeur (DAB)</option>
+    <option value="toilets">Toilettes publiques</option>
+    <option value="drinking_water">Eau potable</option>
+  </optgroup>
+
+  <optgroup label="🏞️ Nature & plein air">
     <option value="park" data-key="leisure">Parc</option>
     <option value="garden" data-key="leisure">Jardin</option>
-    <option value="playground" data-key="leisure">Aire de jeux</option>
     <option value="picnic_site" data-key="tourism">Aire de pique-nique</option>
+    <option value="viewpoint" data-key="tourism">Point de vue</option>
+    <option value="playground" data-key="leisure">Aire de jeux</option>
+    <option value="dog_park" data-key="leisure">Parc pour chiens</option>
+    <option value="fountain" data-key="amenity">Fontaine</option>
   </optgroup>
 
-  <optgroup label="🚗 Services">
-    <option value="parking" data-key="amenity">Parking</option>
-    <option value="fuel" data-key="amenity">Station-service</option>
-    <option value="atm" data-key="amenity">Distributeur automatique</option>
-    <option value="bank" data-key="amenity">Banque</option>
-    <option value="post_office" data-key="amenity">Bureau de poste</option>
-    <option value="toilets" data-key="amenity">Toilettes publiques</option>
-    <option value="charging_station" data-key="amenity">Borne de recharge électrique</option>
-  </optgroup>
 </select>
 
   <button onclick="rechercherLieux('liste')">📋 Afficher sous forme de liste</button>
