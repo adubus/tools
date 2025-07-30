@@ -259,7 +259,10 @@ const key = select.selectedOptions[0].dataset.key || "amenity";
           resultat.innerHTML = "Aucun lieu trouvé.";
           return;
         }
-
+if (!data.elements.length) {
+  resultat.innerHTML = "Aucun lieu trouvé.";
+  return;
+}
 // Tri des lieux par distance
     data.elements.forEach(el => {
   const elLat = el.lat || el.center?.lat;
@@ -277,6 +280,7 @@ if (searchText !== "") {
     return name.includes(searchText) || brand.includes(searchText);
   });
 }
+ const data = await fetch(overpassURL).then(r => r.json());
         
         if (mode === "liste") {
           mapDiv.style.display = "none";
