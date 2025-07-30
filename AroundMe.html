@@ -149,14 +149,6 @@ function haversine(lat1, lon1, lat2, lon2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-// Tri des lieux par distance
-    data.elements.forEach(el => {
-  const elLat = el.lat || el.center?.lat;
-  const elLon = el.lon || el.center?.lon;
-  el._distance = elLat && elLon ? haversine(lat, lon, elLat, elLon) : Infinity;
-});
-data.elements.sort((a, b) => a._distance - b._distance);
-
     
 async function renderPlaces(places) {
     const container = document.getElementById("places-list");
@@ -208,7 +200,7 @@ END:VCARD`;
           <p>
             ${phoneLink}
             📍 ${address}<br/>
-            <br/>📏 ${distanceText}
+            📏 ${distanceText}<br/>
             <a class="button" href="${itineraireURL}">🧭 Itinéraire</a>
             <a class="button" href="${vcfUrl}" download="${name.replace(/\s+/g, "_")}.vcf">📇 Enregistrer dans les contacts</a>
           </p>
@@ -266,6 +258,14 @@ const key = select.selectedOptions[0].dataset.key || "amenity";
           resultat.innerHTML = "Aucun lieu trouvé.";
           return;
         }
+
+// Tri des lieux par distance
+    data.elements.forEach(el => {
+  const elLat = el.lat || el.center?.lat;
+  const elLon = el.lon || el.center?.lon;
+  el._distance = elLat && elLon ? haversine(lat, lon, elLat, elLon) : Infinity;
+});
+data.elements.sort((a, b) => a._distance - b._distance);
 
         if (mode === "liste") {
           mapDiv.style.display = "none";
