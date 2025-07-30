@@ -281,8 +281,7 @@ if (!data.elements.length) {
   el._distance = elLat && elLon ? haversine(lat, lon, elLat, elLon) : Infinity;
 });
 data.elements.sort((a, b) => a._distance - b._distance);
- const data = await fetch(overpassURL).then(r => r.json());
-        
+
         if (mode === "liste") {
           mapDiv.style.display = "none";
           resultat.innerHTML = `<h2>📍 Résultats autour de ${villeLabel} :</h2>`;
