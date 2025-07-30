@@ -150,12 +150,14 @@ function haversine(lat1, lon1, lat2, lon2) {
 }
 
 // Tri des lieux par distance
-data.elements.forEach(el => {
+    data.elements.forEach(el => {
   const elLat = el.lat || el.center?.lat;
   const elLon = el.lon || el.center?.lon;
   el._distance = elLat && elLon ? haversine(lat, lon, elLat, elLon) : Infinity;
 });
 data.elements.sort((a, b) => a._distance - b._distance);
+
+    
 async function renderPlaces(places) {
     const container = document.getElementById("places-list");
     container.innerHTML = "";
@@ -165,6 +167,14 @@ async function renderPlaces(places) {
       const name = el.tags.name || capitalizeFirst(el.tags.amenity) || "(Nom inconnu)";
       const lat = el.lat || el.center?.lat;
       const lon = el.lon || el.center?.lon;
+
+      let distanceText = "";
+if (lat && lon && el._distance !== undefined) {
+  const km = el._distance / 1000;
+  distanceText = `${km.toFixed(1)} km`;
+}
+
+      
       const phone = el.tags.phone || "";
       let address = "";
       const street = el.tags["addr:street"] || "";
@@ -198,6 +208,7 @@ END:VCARD`;
           <p>
             ${phoneLink}
             📍 ${address}<br/>
+            <br/>📏 ${distanceText}
             <a class="button" href="${itineraireURL}">🧭 Itinéraire</a>
             <a class="button" href="${vcfUrl}" download="${name.replace(/\s+/g, "_")}.vcf">📇 Enregistrer dans les contacts</a>
           </p>
