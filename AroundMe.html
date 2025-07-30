@@ -102,7 +102,8 @@
   </optgroup>
 
 </select>
-
+<label for="searchText">Recherche (nom ou marque) :</label>
+<input type="text" id="searchText" placeholder="Ex : Carrefour, Lidl, Parc..." />
   <button onclick="rechercherLieux('liste')">📋 Afficher sous forme de liste</button>
   <button onclick="rechercherLieux('carte')">🗺️ Afficher sur la carte</button>
 
@@ -266,7 +267,17 @@ const key = select.selectedOptions[0].dataset.key || "amenity";
   el._distance = elLat && elLon ? haversine(lat, lon, elLat, elLon) : Infinity;
 });
 data.elements.sort((a, b) => a._distance - b._distance);
+const searchText = document.getElementById("searchText").value.trim().toLowerCase();
 
+if (searchText !== "") {
+  data.elements = data.elements.filter(el => {
+    
+    const name = el.tags?.name?.toLowerCase() || "";
+    const brand = el.tags?.brand?.toLowerCase() || "";
+    return name.includes(searchText) || brand.includes(searchText);
+  });
+}
+        
         if (mode === "liste") {
           mapDiv.style.display = "none";
           resultat.innerHTML = `<h2>📍 Résultats autour de ${villeLabel} :</h2>`;
