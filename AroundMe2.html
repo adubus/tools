@@ -1,95 +1,192 @@
-async function rechercherLieux() {
-  const ville = document.getElementById("ville").value;
-  const rayon = document.getElementById("rayon").value;
-  const mode = document.getElementById("mode").value;
-  const searchText = document.getElementById("searchText").value.trim().toLowerCase();
-  const poiSelect = document.getElementById("poi").value;
-  const resultat = document.getElementById("resultat");
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Recherche de lieux</title>
+  <style>
+    body { font-family: sans-serif; padding: 1rem; }
+    label, select, input, button { display: block; margin: 0.5rem 0; width: 100%; max-width: 400px; }
+    #resultat ul { list-style: none; padding-left: 0; }
+    #resultat li { padding: 5px 0; border-bottom: 1px solid #ccc; }
+    #map { height: 400px; margin-top: 1rem; }
+  </style>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+</head>
+<body>
 
-  if (!ville) {
-    alert("Veuillez entrer une ville.");
-    return;
-  }
+  <h1>Recherche de points d'intérêt</h1>
 
-  // Obtenir les coordonnées de la ville
-  const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${ville}`);
-  const dataVille = await response.json();
-  if (!dataVille.length) {
-    alert("Ville non trouvée.");
-    return;
-  }
+  <label for="ville">Ville :</label>
+  <input type="text" id="ville" placeholder="Ex : Lyon" />
 
-  const lat = parseFloat(dataVille[0].lat);
-  const lon = parseFloat(dataVille[0].lon);
+  <label for="rayon">Rayon (en mètres) :</label>
+  <input type="number" id="rayon" value="1000" />
 
-  // Construire la requête Overpass
-  let query = `
-    [out:json][timeout:25];
-    (
-  `;
+  <label for="mode">Mode d'affichage :</label>
+  <select id="mode">
+    <option value="liste">Liste</option>
+    <option value="carte">Carte</option>
+  </select>
 
-  if (searchText) {
-    query += `
-      node(around:${rayon},${lat},${lon})[name];
-      node(around:${rayon},${lat},${lon})[brand];
-    `;
-  } else {
-    const [key, value] = poiSelect.split("=");
-    query += `
-      node(around:${rayon},${lat},${lon})[${key}=${value}];
-    `;
-  }
+  <label for="searchText">Recherche (nom ou marque) :</label>
+  <input type="text" id="searchText" placeholder="Ex : Carrefour, Parc, Musée..." />
 
-  query += `
-    );
-    out center;
-  `;
+  <label for="poi">Catégorie de lieu :</label>
+  <select id="poi">
+    <option value="tourism=hotel">🏨 Hôtel</option>
+    <option value="amenity=restaurant">🍽️ Restaurant</option>
+    <option value="amenity=cafe">☕ Café</option>
+    <option value="amenity=drinking_water">🚰 Eau potable</option>
+    <option value="leisure=park">🌳 Parc</option>
+    <option value="shop=supermarket">🛒 Supermarché</option>
+    <option value="amenity=pharmacy">💊 Pharmacie</option>
+    <option value="amenity=hospital">🏥 Hôpital</option>
+    <option value="amenity=bank">🏦 Banque</option>
+    <option value="tourism=museum">🖼️ Musée</option>
+    <option value="tourism=attraction">🎡 Attraction</option>
+    <option value="amenity=toilets">🚻 Toilettes publiques</option>
+    <option value="amenity=library">📚 Bibliothèque</option>
+    <!-- Ajoute d'autres si tu veux -->
+  </select>
 
-  const overpassURL = "https://overpass-api.de/api/interpreter?data=" + encodeURIComponent(query);
-  const data = await fetch(overpassURL).then(r => r.json());
+  <button onclick="rechercherLieux()">Rechercher</button>
 
-  // Filtrage local si recherche texte précisée
-  if (searchText) {
-    data.elements = data.elements.filter(el => {
-      const name = el.tags?.name?.toLowerCase() || "";
-      const brand = el.tags?.brand?.toLowerCase() || "";
-      return name.includes(searchText) || brand.includes(searchText);
-    });
-  }
+  <div id="resultat"></div>
+  <div id="map"></div>
 
-  if (!data.elements.length) {
-    resultat.innerHTML = "Aucun lieu trouvé.";
-    return;
-  }
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    async function rechercherLieux() {
+      const ville = document.getElementById("ville").value;
+      const rayon = document.getElementById("rayon").value;
+      const mode = document.getElementById("mode").value;
+      const searchText = document.getElementById("searchText").value.trim().toLowerCase();
+      const poiSelect = document.getElementById("poi").value;
+      const resultat = document.getElementById("resultat");
 
-  // Calcul des distances et tri
-  data.elements.forEach(el => {
-    const elLat = el.lat || el.center?.lat;
-    const elLon = el.lon || el.center?.lon;
-    el._distance = elLat && elLon ? haversine(lat, lon, elLat, elLon) : Infinity;
-  });
-  data.elements.sort((a, b) => a._distance - b._distance);
+      if (!ville) {
+        alert("Veuillez entrer une ville.");
+        return;
+      }
 
-  if (mode === "liste") {
-    renderPlaces(data.elements, lat, lon);
-  } else {
-    afficherCarte(data.elements, lat, lon);
-  }
-}
+      // Obtenir les coordonnées de la ville
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${ville}`);
+      const dataVille = await response.json();
+      if (!dataVille.length) {
+        alert("Ville non trouvée.");
+        return;
+      }
 
-// Fonction de calcul de distance (Haversine)
-function haversine(lat1, lon1, lat2, lon2) {
-  const R = 6371e3;
-  const toRad = x => x * Math.PI / 180;
-  const φ1 = toRad(lat1);
-  const φ2 = toRad(lat2);
-  const Δφ = toRad(lat2 - lat1);
-  const Δλ = toRad(lon2 - lon1);
+      const lat = parseFloat(dataVille[0].lat);
+      const lon = parseFloat(dataVille[0].lon);
 
-  const a = Math.sin(Δφ / 2) ** 2 +
-            Math.cos(φ1) * Math.cos(φ2) *
-            Math.sin(Δλ / 2) ** 2;
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      // Construire la requête Overpass
+      let query = `[out:json][timeout:25];(`;
 
-  return R * c;
-}
+      if (searchText) {
+        query += `
+          node(around:${rayon},${lat},${lon})[name];
+          node(around:${rayon},${lat},${lon})[brand];
+        `;
+      } else {
+        const [key, value] = poiSelect.split("=");
+        query += `node(around:${rayon},${lat},${lon})[${key}=${value}];`;
+      }
+
+      query += `);out center;`;
+
+      const overpassURL = "https://overpass-api.de/api/interpreter?data=" + encodeURIComponent(query);
+      const data = await fetch(overpassURL).then(r => r.json());
+
+      // Filtrage local si recherche texte précisée
+      if (searchText) {
+        data.elements = data.elements.filter(el => {
+          const name = el.tags?.name?.toLowerCase() || "";
+          const brand = el.tags?.brand?.toLowerCase() || "";
+          return name.includes(searchText) || brand.includes(searchText);
+        });
+      }
+
+      if (!data.elements.length) {
+        resultat.innerHTML = "Aucun lieu trouvé.";
+        return;
+      }
+
+      // Calcul des distances et tri
+      data.elements.forEach(el => {
+        const elLat = el.lat || el.center?.lat;
+        const elLon = el.lon || el.center?.lon;
+        el._distance = elLat && elLon ? haversine(lat, lon, elLat, elLon) : Infinity;
+      });
+      data.elements.sort((a, b) => a._distance - b._distance);
+
+      if (mode === "liste") {
+        renderPlaces(data.elements, lat, lon);
+      } else {
+        afficherCarte(data.elements, lat, lon);
+      }
+    }
+
+    function renderPlaces(places, lat, lon) {
+      const resultat = document.getElementById("resultat");
+      const ul = document.createElement("ul");
+
+      places.forEach(el => {
+        const li = document.createElement("li");
+        const name = el.tags?.name || "(Sans nom)";
+        const brand = el.tags?.brand ? ` (${el.tags.brand})` : "";
+        const distance = el._distance ? `${(el._distance / 1000).toFixed(2)} km` : "";
+        li.textContent = `${name}${brand} – ${distance}`;
+        ul.appendChild(li);
+      });
+
+      resultat.innerHTML = "";
+      resultat.appendChild(ul);
+      document.getElementById("map").innerHTML = ""; // vide la carte si on repasse en liste
+    }
+
+    function afficherCarte(places, lat, lon) {
+      document.getElementById("resultat").innerHTML = "";
+      const mapDiv = document.getElementById("map");
+      mapDiv.innerHTML = "";
+
+      const map = L.map("map").setView([lat, lon], 14);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: '&copy; OpenStreetMap'
+      }).addTo(map);
+
+      places.forEach(el => {
+        const name = el.tags?.name || "Lieu sans nom";
+        const elLat = el.lat || el.center?.lat;
+        const elLon = el.lon || el.center?.lon;
+
+        if (elLat && elLon) {
+          const distance = el._distance ? `${(el._distance / 1000).toFixed(2)} km` : "";
+          L.marker([elLat, elLon])
+            .addTo(map)
+            .bindPopup(`<strong>${name}</strong><br>Distance : ${distance}`);
+        }
+      });
+
+      L.circle([lat, lon], { radius: parseFloat(document.getElementById("rayon").value), color: "blue", fillOpacity: 0.1 }).addTo(map);
+    }
+
+    function haversine(lat1, lon1, lat2, lon2) {
+      const R = 6371e3;
+      const toRad = x => x * Math.PI / 180;
+      const φ1 = toRad(lat1);
+      const φ2 = toRad(lat2);
+      const Δφ = toRad(lat2 - lat1);
+      const Δλ = toRad(lon2 - lon1);
+
+      const a = Math.sin(Δφ / 2) ** 2 +
+                Math.cos(φ1) * Math.cos(φ2) *
+                Math.sin(Δλ / 2) ** 2;
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+      return R * c;
+    }
+  </script>
+</body>
+</html>
