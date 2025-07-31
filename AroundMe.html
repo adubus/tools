@@ -241,7 +241,7 @@ const key = select.selectedOptions[0].dataset.key || "amenity";
           villeLabel = reverse.address.city || reverse.address.town || reverse.address.village || "votre position";
         }
 
-        const radius = 3000;
+        const radius = 10000;
       const query = `
   [out:json];
   (
