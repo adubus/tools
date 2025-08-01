@@ -1,7 +1,62 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stations-service autour de moi</title>
+</head>
 <body>
-  <h1>⛽ Stations-service autour de moi</h1>
-  <div id="status">🔄 Localisation...</div>
-  <ul id="stations-list"></ul>
+  <h1>⛽ Stations-service proches</h1>
+  <div id="status">Chargement des données...</div>
+  <ul id="liste-stations"></ul>
 
-  <script src="stations.js"></script>
+  <script>
+    function getDistanceKm(lat1, lon1, lat2, lon2) {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2)**2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+
+    async function chargerStations() {
+      const status = document.getElementById("status");
+      const liste = document.getElementById("liste-stations");
+
+      try {
+        const pos = await new Promise((resolve, reject) =>
+          navigator.geolocation.getCurrentPosition(resolve, reject)
+        );
+        const userLat = pos.coords.latitude;
+        const userLon = pos.coords.longitude;
+
+        const res = await fetch("/api/carburants");
+        const stations = await res.json();
+
+        stations.forEach(st => {
+          st.distance = getDistanceKm(userLat, userLon, st.lat, st.lon);
+        });
+
+        stations.sort((a, b) => a.distance - b.distance);
+
+        status.textContent = `Stations trouvées : ${stations.length}`;
+        liste.innerHTML = "";
+
+        stations.slice(0, 20).forEach(st => {
+          const li = document.createElement("li");
+          li.innerHTML = `<strong>${st.ville}</strong> – ${st.adresse}<br>
+            ${st.carburants.map(c => `${c.nom} : ${c.valeur} €`).join(" | ")}<br>
+            🧭 ${st.distance.toFixed(2)} km`;
+          liste.appendChild(li);
+        });
+
+      } catch (err) {
+        console.error(err);
+        status.textContent = "Erreur lors du chargement des données.";
+      }
+    }
+
+    chargerStations();
+  </script>
 </body>
+</html>
