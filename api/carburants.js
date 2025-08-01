@@ -1,4 +1,3 @@
-// Vercel API route - Télécharger et parser le XML
 export default async function handler(req, res) {
   try {
     const xmlUrl = "https://donnees.roulez-eco.fr/opendata/instantane";
@@ -7,7 +6,7 @@ export default async function handler(req, res) {
 
     const stations = await parseXmlToStations(xmlText);
 
-    res.setHeader("Cache-Control", "s-maxage=86400, stale-while-revalidate"); // cache 24h
+    res.setHeader("Cache-Control", "s-maxage=86400, stale-while-revalidate");
     res.status(200).json(stations);
   } catch (error) {
     console.error("Erreur récupération carburants:", error);
@@ -20,7 +19,7 @@ async function parseXmlToStations(xml) {
   const parsed = await parseStringPromise(xml);
 
   const rawStations = parsed?.pdv_liste?.pdv || [];
-  const result = rawStations.map((station) => {
+  return rawStations.map((station) => {
     const lat = parseFloat(station.$.latitude) / 100000;
     const lon = parseFloat(station.$.longitude) / 100000;
     const id = station.$.id;
@@ -35,6 +34,4 @@ async function parseXmlToStations(xml) {
 
     return { id, lat, lon, ville, adresse, carburants };
   });
-
-  return result;
 }
