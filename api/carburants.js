@@ -1,7 +1,9 @@
 export default async function handler(req, res) {
   try {
     const xmlUrl = "https://donnees.roulez-eco.fr/opendata/instantane";
-    const response = await fetch(xmlUrl);
+    import https from "https";
+const response = await fetch(xmlUrl, { agent: new https.Agent({ rejectUnauthorized: false }) });
+    
     const xmlText = await response.text();
 
     const stations = await parseXmlToStations(xmlText);
