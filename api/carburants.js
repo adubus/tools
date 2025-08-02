@@ -3,6 +3,7 @@ import { fetch } from "undici";
 import JSZip from "jszip";
 import { parseStringPromise } from "xml2js";
 
+import iconv from "iconv-lite";
 export default async function handler(req, res) {
   try {
     const zipUrl = "https://donnees.roulez-eco.fr/opendata/instantane";
