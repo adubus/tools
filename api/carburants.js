@@ -1,28 +1,32 @@
+import JSZip from "jszip";
+import { parseStringPromise } from "xml2js";
+
 export default async function handler(req, res) {
   try {
-    const xmlUrl = "https://donnees.roulez-eco.fr/opendata/instantane";
-    import https from "https";
-const response = await fetch(xmlUrl, { agent: new https.Agent({ rejectUnauthorized: false }) });
-    
-    const xmlText = await response.text();
+    const zipUrl = "https://donnees.roulez-eco.fr/opendata/instantane";
+    const zipResponse = await fetch(zipUrl);
+    const zipBuffer = await zipResponse.arrayBuffer();
+
+    const zip = await JSZip.loadAsync(zipBuffer);
+    const files = Object.keys(zip.files);
+    const xmlFileName = files.find((name) => name.endsWith(".xml"));
+    const xmlText = await zip.files[xmlFileName].async("text");
 
     const stations = await parseXmlToStations(xmlText);
 
     res.setHeader("Cache-Control", "s-maxage=86400, stale-while-revalidate");
     res.status(200).json(stations);
   } catch (error) {
-  console.error("Erreur récupération carburants:", error);
-  res.status(500).json({ error: error.message || "Erreur récupération des données" });
-}
-  
+    console.error("Erreur récupération carburants:", error);
+    res.status(500).json({ error: "Erreur récupération des données" });
+  }
 }
 
 async function parseXmlToStations(xml) {
-  const { parseStringPromise } = await import("xml2js");
   const parsed = await parseStringPromise(xml);
 
   const rawStations = parsed?.pdv_liste?.pdv || [];
-  return rawStations.map((station) => {
+  const result = rawStations.map((station) => {
     const lat = parseFloat(station.$.latitude) / 100000;
     const lon = parseFloat(station.$.longitude) / 100000;
     const id = station.$.id;
@@ -37,4 +41,6 @@ async function parseXmlToStations(xml) {
 
     return { id, lat, lon, ville, adresse, carburants };
   });
+
+  return result;
 }
