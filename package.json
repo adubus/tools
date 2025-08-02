@@ -5,6 +5,7 @@
   },
   "dependencies": {
     "xml2js": "^0.4.23",
+      "undici": "^6.11.0",
     "jszip": "^3.10.1"
   }
 }
